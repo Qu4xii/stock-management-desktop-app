@@ -1,0 +1,21 @@
+/* In src/renderer/src/assets/index.css */
+
+/* These are the standard Tailwind imports. Do not remove them. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+  --- THIS IS THE CRITICAL FIX ---
+  We are creating a new rule for the 'body' element.
+  @layer base tells Tailwind to treat this as a fundamental base style.
+  @apply lets us use Tailwind's utility classes directly in our CSS.
+  
+  This sets a light gray background in light mode and a dark slate background
+  in dark mode for the ENTIRE application window. It also sets default text colors.
+*/
+@layer base {
+  body {
+    @apply bg-gray-100 dark:bg-slate-900 text-slate-900 dark:text-slate-50;
+  }
+}
