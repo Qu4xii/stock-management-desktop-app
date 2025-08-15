@@ -8,7 +8,7 @@ import App from './App';
 import DashboardPage from './pages/DashboardPage';
 import ClientsPage from './pages/ClientsPage'; // <-- THIS LINE IS NOW CORRECT
 import HistoryPage from './pages/HistoryPage';
-
+import ProductsPage from './pages/ProductsPage'; 
 const router = createHashRouter([
   {
     path: '/',
@@ -21,8 +21,24 @@ const router = createHashRouter([
       },
       { path: 'history', element: <HistoryPage /> }
     ]
+  },
+
+  {
+    path: '/',
+    element: <App />,
+    children: [
+      { index: true, element: <DashboardPage /> },
+      { path: 'clients', element: <ClientsPage /> },
+      {
+        path: 'products', // <-- ADD THIS NEW ROUTE OBJECT
+        element: <ProductsPage />
+      },
+      { path: 'history', element: <HistoryPage /> }
+    ]
   }
+
 ]);
+
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>

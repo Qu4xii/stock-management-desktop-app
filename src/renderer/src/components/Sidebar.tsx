@@ -27,10 +27,10 @@ function Sidebar(): JSX.Element {
           History
         </Link>
         {/* Placeholder links for Products and Repairs */}
-        <a href="#" className="flex items-center p-2 rounded-md hover:bg-slate-700 opacity-50 cursor-not-allowed">
+        <Link to="/products" className={`flex items-center p-2 rounded-md ${isActive('/products') ? 'bg-slate-700' : 'hover:bg-slate-700'}`}>
           <Package className="w-5 h-5 mr-3" />
           Products
-        </a>
+        </Link>
         <a href="#" className="flex items-center p-2 rounded-md hover:bg-slate-700 opacity-50 cursor-not-allowed">
           <Wrench className="w-5 h-5 mr-3" />
           Repairs

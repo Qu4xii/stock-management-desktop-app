@@ -9,3 +9,10 @@ export interface Client {
   phone: string;      // <-- NEW FIELD
   picture?: string;   // <-- NEW, OPTIONAL FIELD (the '?' makes it optional)
 }
+export interface Product {
+  id: number;
+  name: string;
+  quantity: number;
+  price: number;
+  // 'availability' can be derived from quantity > 0, but we can add it if needed.
+}
