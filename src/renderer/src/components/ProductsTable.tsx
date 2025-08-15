@@ -1,6 +1,5 @@
 // In src/renderer/src/components/ProductsTable.tsx
 
-import React from 'react';
 import { Product } from './types';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
@@ -12,12 +11,23 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table';
+import { MoreHorizontal } from 'lucide-react'; // A common icon for an options menu
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu'; // We will use a dropdown for the actions
 
 interface ProductsTableProps {
   products: Product[];
+  onEdit: (product: Product) => void;   // <-- NEW PROP: Function to handle editing
+  onDelete: (productId: number) => void; // <-- NEW PROP: Function to handle deleting
 }
 
-function ProductsTable({ products }: ProductsTableProps): JSX.Element {
+function ProductsTable({ products, onEdit, onDelete }: ProductsTableProps): JSX.Element {
   return (
     <Card>
       <Table>
@@ -53,7 +63,33 @@ function ProductsTable({ products }: ProductsTableProps): JSX.Element {
                   </span>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm">Edit</Button>
+                  {/* --- NEW ACTION DROPDOWN --- */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => onEdit(product)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          // It's good practice to confirm a destructive action like deleting.
+                          if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
+                            onDelete(product.id);
+                          }
+                        }}
+                        className="text-red-500 focus:text-red-500"
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))
