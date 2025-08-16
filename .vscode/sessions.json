@@ -1,0 +1,154 @@
+{
+  "$schema": "https://cdn.statically.io/gh/nguyenngoclongdev/cdn/main/schema/v11/terminal-keeper.json",
+  "theme": "tribe",
+  "active": "saved-session",
+  "activateOnStartup": true,
+  "keepExistingTerminals": false,
+  "sessions": {
+    "default": [
+      {
+        "name": "hello",
+        "autoExecuteCommands": true,
+        "icon": "person",
+        "color": "terminal.ansiGreen",
+        "commands": [
+          "echo hello"
+        ]
+      },
+      [
+        {
+          "name": "docker:ros",
+          "commands": [
+            ""
+          ]
+        },
+        {
+          "name": "docker:k8s",
+          "commands": [
+            ""
+          ]
+        }
+      ],
+      [
+        {
+          "name": "docker:nats",
+          "commands": [
+            ""
+          ]
+        },
+        {
+          "name": "docker:fleet",
+          "commands": [
+            ""
+          ]
+        }
+      ]
+    ],
+    "saved-session": [
+      {
+        "name": "connect",
+        "commands": [
+          ""
+        ]
+      },
+      {
+        "name": "typecheck:node",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "tsc --noEmit -p tsconfig.node.json --composite false"
+        ]
+      },
+      {
+        "name": "typecheck:web",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "tsc --noEmit -p tsconfig.web.json --composite false"
+        ]
+      },
+      {
+        "name": "typecheck",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "npm run typecheck:node && npm run typecheck:web"
+        ]
+      },
+      {
+        "name": "start",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "electron-vite preview"
+        ]
+      },
+      {
+        "name": "dev",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "electron-vite dev"
+        ]
+      },
+      {
+        "name": "build",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "npm run typecheck && electron-vite build"
+        ]
+      },
+      {
+        "name": "postinstall",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "electron-builder install-app-deps"
+        ]
+      },
+      {
+        "name": "build:unpack",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "npm run build && electron-builder --dir"
+        ]
+      },
+      {
+        "name": "build:win",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "npm run build && electron-builder --win"
+        ]
+      },
+      {
+        "name": "build:mac",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "electron-vite build && electron-builder --mac"
+        ]
+      },
+      {
+        "name": "build:linux",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "electron-vite build && electron-builder --linux"
+        ]
+      },
+      {
+        "name": "test:unit",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "vitest"
+        ]
+      },
+      {
+        "name": "test",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "npm run test:unit"
+        ]
+      },
+      {
+        "name": "coverage",
+        "cwd": "C:\\Users\\Miled\\Downloads\\electron-react-shadcn-main",
+        "commands": [
+          "vitest run --coverage"
+        ]
+      }
+    ]
+  }
+}

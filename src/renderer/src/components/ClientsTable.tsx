@@ -1,9 +1,11 @@
 // In src/renderer/src/components/ClientsTable.tsx
+
 import React from 'react';
-import { Client } from './types'; // Note the path: ../types
+import { Client } from './types';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { MoreHorizontal } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -12,9 +14,21 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
 
+// --- ADD NEW PROPS FOR THE ACTIONS ---
 interface ClientsTableProps {
   clients: Client[];
+  onView: (client: Client) => void;
+  onEdit: (client: Client) => void;
+  onDelete: (clientId: number) => void;
 }
 
 const getInitials = (name: string): string => {
@@ -25,7 +39,7 @@ const getInitials = (name: string): string => {
   return name[0] ? name[0].toUpperCase() : '';
 };
 
-function ClientsTable({ clients }: ClientsTableProps): JSX.Element {
+function ClientsTable({ clients, onView, onEdit, onDelete }: ClientsTableProps): JSX.Element {
   return (
     <Card>
       <Table>
@@ -62,7 +76,35 @@ function ClientsTable({ clients }: ClientsTableProps): JSX.Element {
                   <div className="text-sm text-muted-foreground">{client.phone}</div>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm">View</Button>
+                  {/* --- NEW ACTION DROPDOWN FOR CLIENTS --- */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => onView(client)}>
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onEdit(client)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to delete "${client.name}"?`)) {
+                            onDelete(client.id);
+                          }
+                        }}
+                        className="text-red-500 focus:text-red-500"
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))
