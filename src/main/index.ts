@@ -1,83 +1,98 @@
-import { app, shell, BrowserWindow, ipcMain } from "electron";
-import { join } from "path";
-import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import icon from "../../resources/icon.png?asset";
-import { getVersions, triggerIPC } from "@/lib";
-import { GetVersionsFn } from "@shared/types";
+// In src/main/index.ts
+
+import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { join } from 'path'
+import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import icon from '../../resources/icon.png?asset'
+import { clientsApi } from './lib/db' // <-- Import our new database API
 
 function createWindow(): void {
-  // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1200,
+    height: 800,
     show: false,
     autoHideMenuBar: true,
-    vibrancy: "under-window",
-    ...(process.platform === "linux" ? { icon } : {}),
+    ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, "../preload/index.js"),
-      sandbox: true,
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: false,
       contextIsolation: true,
     },
-  });
+  })
 
-  mainWindow.on("ready-to-show", () => {
-    mainWindow.show();
-  });
+  mainWindow.on('ready-to-show', () => {
+    mainWindow.show()
+  })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url);
-    return { action: "deny" };
-  });
+    shell.openExternal(details.url)
+    return { action: 'deny' }
+  })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+// --- THIS IS THE CRITICAL FIX ---
+// We are removing all old IPC handlers and adding the new ones for our database.
+
 app.whenReady().then(() => {
-  // Set app user model id for windows
-  electronApp.setAppUserModelId("com.electron");
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
-  app.on("browser-window-created", (_, window) => {
-    optimizer.watchWindowShortcuts(window);
-  });
-
-  createWindow();
-
-  app.on("activate", function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
-
-  // IPC events
-  ipcMain.handle(
-    "getVersions",
-    (_, ...args: Parameters<GetVersionsFn>) => getVersions(...args)
-  );
-
-  ipcMain.handle("triggerIPC", () => triggerIPC());
-});
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
+   console.log('[DATABASE] Testing database connection...')
+  try {
+    const clients = clientsApi.getAll()
+    console.log(`[DATABASE] Success! Found ${clients.length} clients.`)
+  } catch (error) {
+    console.error('[DATABASE] Failed to connect to database:', error)
   }
-});
+  
+  electronApp.setAppUserModelId('com.electron')
 
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
+  app.on('browser-window-created', (_, window) => {
+    optimizer.watchWindowShortcuts(window)
+  })
+
+  // --- CLIENTS IPC API ---
+  // These are the backend listeners that our React app will call.
+
+  // READ: Handle request to get all clients
+  ipcMain.handle('db:clients-getAll', () => {
+    return clientsApi.getAll()
+  })
+  
+  // CREATE: Handle request to add a new client
+  ipcMain.handle('db:clients-add', (_event, clientData) => {
+    const newClientRecord = clientsApi.add(clientData)
+    // After adding, we get the full record to return to the frontend
+    return clientsApi.getById(newClientRecord.id)
+  })
+
+  // UPDATE: Handle request to update a client
+  ipcMain.handle('db:clients-update', (_event, clientData) => {
+    clientsApi.update(clientData)
+    // After updating, we can return the updated record
+    return clientsApi.getById(clientData.id)
+  })
+
+  // DELETE: Handle request to delete a client
+  ipcMain.handle('db:clients-delete', (_event, clientId) => {
+    clientsApi.delete(clientId)
+  })
+
+  // We will add IPC handlers for Products here later.
+
+  createWindow()
+
+  app.on('activate', function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
