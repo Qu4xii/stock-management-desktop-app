@@ -5,7 +5,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { clientsApi } from './lib/db' // <-- Import our new database API
-
+import { productsApi } from './lib/db'; // <-- ADD productsApi HERE
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 1200,
@@ -83,7 +83,23 @@ app.whenReady().then(() => {
   })
 
   // We will add IPC handlers for Products here later.
+ipcMain.handle('db:products-getAll', () => {
+    return productsApi.getAll();
+  });
 
+  ipcMain.handle('db:products-add', (_event, productData) => {
+    const newRecord = productsApi.add(productData);
+    return productsApi.getById(newRecord.id);
+  });
+
+  ipcMain.handle('db:products-update', (_event, productData) => {
+    productsApi.update(productData);
+    return productsApi.getById(productData.id);
+  });
+
+  ipcMain.handle('db:products-delete', (_event, productId) => {
+    productsApi.delete(productId);
+  });
   createWindow()
 
   app.on('activate', function () {

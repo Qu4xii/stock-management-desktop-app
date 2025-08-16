@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
-import { Product } from './types'; // Ensure path is correct: ../types if types folder is in src/renderer/src
+import { Product } from '../types'; // Ensure path is correct: ../types if types folder is in src/renderer/src
 
 interface EditProductDialogProps {
   product: Product | null;

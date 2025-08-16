@@ -93,3 +93,44 @@ export const clientsApi = {
 }
 
 // We will add a productsApi object here next.
+// In src/main/lib/db.ts
+
+// ... (your existing db setup and clientsApi object) ...
+
+// --- ADD THE PRODUCTS API OBJECT BELOW ---
+
+export const productsApi = {
+  // READ: Get all products
+  getAll: (): any[] => {
+    const stmt = db.prepare('SELECT * FROM products ORDER BY name ASC');
+    return stmt.all();
+  },
+
+  // CREATE: Add a new product
+  add: (productData: any): { id: number } => {
+    const stmt = db.prepare(
+      'INSERT INTO products (name, quantity, price) VALUES (@name, @quantity, @price)'
+    );
+    const info = stmt.run(productData);
+    return { id: Number(info.lastInsertRowid) };
+  },
+  
+  // Helper to get a single product by ID
+  getById: (id: number): any => {
+    return db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+  },
+  
+  // UPDATE: Update an existing product
+  update: (productData: any): void => {
+    const stmt = db.prepare(
+      'UPDATE products SET name = @name, quantity = @quantity, price = @price WHERE id = @id'
+    );
+    stmt.run(productData);
+  },
+
+  // DELETE: Remove a product
+  delete: (id: number): void => {
+    const stmt = db.prepare('DELETE FROM products WHERE id = ?');
+    stmt.run(id);
+  },
+};

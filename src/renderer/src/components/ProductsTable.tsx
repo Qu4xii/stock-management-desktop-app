@@ -1,6 +1,6 @@
 // In src/renderer/src/components/ProductsTable.tsx
 
-import { Product } from './types';
+import { Product } from '../types';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import {

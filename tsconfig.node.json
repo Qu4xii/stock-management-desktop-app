@@ -1,24 +1,29 @@
 {
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
+  
   "include": [
-    "electron.vite.config.*",
+    "electron.vite.config.ts",
     "src/main/**/*",
     "src/preload/**/*",
-    "src/shared/**/*"
+    "src/shared/**/*",
+    // This is the explicit exception: We are telling the Node project
+    // that it is allowed to know about this specific folder.
+    "src/renderer/src/types/**/*" 
   ],
+
+  "exclude": [
+    // This is the rule: After including the files above,
+    // ignore everything else inside the renderer's source folder.
+    // This prevents conflicts with React components.
+  
+  ],
+
   "compilerOptions": {
     "composite": true,
     "types": [
       "electron-vite/node"
     ],
-    "baseUrl": ".",
-    "paths": {
-      "@*": [
-        "src/main/*"
-      ],
-      "@shared/*": [
-        "src/shared/*"
-      ]
-    }
+    "baseUrl": "."
+    // We are not using paths/aliases here to keep it simple and reliable.
   }
 }

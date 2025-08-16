@@ -1,6 +1,6 @@
 // In src/renderer/src/components/AddClientForm.tsx
 import React, { useState } from 'react';
-import { Client } from './types';
+import { Client } from '../types';
 
 interface AddClientFormProps {
   onClientAdded: (clientData: Omit<Client, 'id' | 'picture'>) => void;

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import AddClientForm from './AddClientForm';
-import { Client } from './types';
+import { Client } from '../types';
 
 interface AddClientDialogProps {
   children: React.ReactNode;

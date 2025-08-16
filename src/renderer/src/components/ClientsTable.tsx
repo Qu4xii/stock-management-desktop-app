@@ -1,7 +1,7 @@
 // In src/renderer/src/components/ClientsTable.tsx
 
 import React from 'react';
-import { Client } from './types';
+import { Client } from '../types';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';

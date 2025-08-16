@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
-import { Client } from './types';
+import { Client } from '../types';
 
 interface EditClientDialogProps {
   client: Client | null;

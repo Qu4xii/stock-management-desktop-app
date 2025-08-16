@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { Client } from './types';
+import { Client } from '../types';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 interface ViewClientDialogProps {

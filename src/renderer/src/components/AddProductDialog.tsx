@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
-import { Product } from './types';
+import { Product } from '../types';
 
 interface AddProductDialogProps {
   children: React.ReactNode;

@@ -1,42 +1,49 @@
 // In src/renderer/src/pages/ClientsPage.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // <-- Add useEffect and useCallback
 import { PlusCircle } from 'lucide-react';
 import ClientsTable from '../components/ClientsTable';
 import AddClientDialog from '../components/AddClientDialog';
-import EditClientDialog from '../components/EditClientDialog'; // <-- IMPORT EDIT
-import ViewClientDialog from '../components/ViewClientDialog'; // <-- IMPORT VIEW
+import EditClientDialog from '../components/EditClientDialog';
+import ViewClientDialog from '../components/ViewClientDialog';
 import { Button } from '../components/ui/button';
-import { Client } from '../components/types';
-
-const initialClients: Client[] = [
-  { id: 1, name: 'John Doe', idCard: 'AB123456', address: '123 Main St', email: 'john.doe@example.com', phone: '555-1234' },
-  { id: 2, name: 'Jane Smith', idCard: 'CD789012', address: '456 Oak Ave', email: 'jane.smith@example.com', phone: '555-5678' },
-];
+import { Client } from '../types';
 
 function ClientsPage(): JSX.Element {
-  const [clients, setClients] = useState<Client[]>(initialClients);
-  // --- NEW STATE FOR THE DIALOGS ---
+  // The master list of clients, now loaded from the database.
+  const [clients, setClients] = useState<Client[]>([]);
+  // State to manage which client is being edited or viewed.
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
 
-  // --- HANDLER FUNCTIONS ---
-  const handleAddClient = (newClientData: Omit<Client, 'id' | 'picture'>) => {
-    const clientWithId: Client = { ...newClientData, id: Date.now() };
-    setClients(prevClients => [...prevClients, clientWithId]);
+  // --- NEW: FUNCTION TO LOAD DATA FROM BACKEND ---
+  const fetchClients = useCallback(async () => {
+    const clientsFromDb = await window.db.getClients();
+    setClients(clientsFromDb);
+  }, []);
+
+  // --- NEW: useEffect TO LOAD DATA ON PAGE LOAD ---
+  // This hook runs once when the component is first rendered.
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
+
+
+  // --- UPDATED HANDLER FUNCTIONS ---
+  const handleAddClient = async (newClientData: Omit<Client, 'id' | 'picture'>) => {
+    await window.db.addClient(newClientData);
+    fetchClients(); // Refresh the list from the database
   };
 
-  const handleUpdateClient = (updatedClient: Client) => {
-    setClients(prevClients =>
-      prevClients.map(c => (c.id === updatedClient.id ? updatedClient : c))
-    );
+  const handleUpdateClient = async (updatedClient: Client) => {
+    await window.db.updateClient(updatedClient);
     setEditingClient(null); // Close the dialog
+    fetchClients(); // Refresh the list
   };
 
-  const handleDeleteClient = (clientId: number) => {
-    setClients(prevClients =>
-      prevClients.filter(c => c.id !== clientId)
-    );
+  const handleDeleteClient = async (clientId: number) => {
+    await window.db.deleteClient(clientId);
+    fetchClients(); // Refresh the list
   };
 
   return (
@@ -56,12 +63,11 @@ function ClientsPage(): JSX.Element {
       
       <ClientsTable 
         clients={clients}
-        onView={setViewingClient} // Pass the state setter function directly
+        onView={setViewingClient}
         onEdit={setEditingClient}
         onDelete={handleDeleteClient}
       />
 
-      {/* Render the dialogs. They will only be visible when their state is not null. */}
       <EditClientDialog
         client={editingClient}
         isOpen={!!editingClient}
