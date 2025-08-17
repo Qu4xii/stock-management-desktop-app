@@ -28,7 +28,18 @@ export interface DBApi {
   updateProduct: (productData: Product) => Promise<Product>;
   deleteProduct: (productId: number) => Promise<void>;
 }
+export interface Purchase {
+  id: number;
+  purchase_date: string;
+  total_price: number;
+  products: string; // A comma-separated string of product names
+}
 
+export interface DBApi {
+  // ... (client and product methods)
+  createPurchase: (data: { clientId: number, items: { id: number, quantity: number }[] }) => Promise<{ id: number }>;
+  getPurchasesForClient: (clientId: number) => Promise<Purchase[]>;
+}
 
 // Extend the global Window interface to include our new 'db' property
 declare global {

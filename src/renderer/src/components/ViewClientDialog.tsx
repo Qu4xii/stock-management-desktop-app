@@ -1,8 +1,9 @@
 // In src/renderer/src/components/ViewClientDialog.tsx
 
-import React from 'react';
+// --- 1. IMPORT THE NECESSARY REACT HOOKS AND TYPES ---
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { Client } from '../types';
+import { Client, Purchase } from '../types'; // Import both Client and Purchase types
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 interface ViewClientDialogProps {
@@ -20,7 +21,26 @@ const getInitials = (name: string = ''): string => {
 };
 
 function ViewClientDialog({ client, isOpen, onClose }: ViewClientDialogProps): JSX.Element {
-  if (!client) return null; // If no client is selected, render nothing
+  // --- 2. CREATE STATE TO STORE THE FETCHED PURCHASES ---
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // --- 3. USE useEffect TO FETCH DATA WHEN THE DIALOG OPENS ---
+  useEffect(() => {
+    // This effect runs whenever 'isOpen' or 'client' changes.
+    if (isOpen && client) {
+      setIsLoading(true);
+      // Call the backend API function we defined in the preload script.
+      window.db.getPurchasesForClient(client.id)
+        .then(fetchedPurchases => {
+          setPurchases(fetchedPurchases);
+        })
+        .catch(console.error)
+        .finally(() => setIsLoading(false));
+    }
+  }, [isOpen, client]); // The dependency array ensures this runs at the right time.
+
+  if (!client) return <></>; // Render nothing if no client is selected.
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -41,7 +61,7 @@ function ViewClientDialog({ client, isOpen, onClose }: ViewClientDialogProps): J
         </DialogHeader>
         
         <div className="py-4 space-y-6">
-          {/* Contact Info Section */}
+          {/* Contact Info Section (no changes here) */}
           <div>
             <h3 className="text-lg font-semibold mb-2">Contact Information</h3>
             <div className="text-sm text-muted-foreground grid grid-cols-2 gap-2">
@@ -51,18 +71,34 @@ function ViewClientDialog({ client, isOpen, onClose }: ViewClientDialogProps): J
             </div>
           </div>
 
-          {/* Purchase History Section (Placeholder) */}
+          {/* --- 4. UPDATE THE PURCHASE HISTORY SECTION TO DISPLAY REAL DATA --- */}
           <div>
             <h3 className="text-lg font-semibold mb-2">Purchase History</h3>
-            <div className="border rounded-lg p-4 h-32 flex items-center justify-center">
-              <p className="text-muted-foreground">Purchase history will be displayed here.</p>
+            <div className="border rounded-lg p-4 min-h-[8rem] space-y-2">
+              {isLoading ? (
+                <p className="text-muted-foreground">Loading history...</p>
+              ) : purchases.length > 0 ? (
+                // If purchases are found, map over them and display the details.
+                purchases.map(p => (
+                  <div key={p.id} className="text-sm flex justify-between">
+                    <span>
+                      <strong>{new Date(p.purchase_date).toLocaleDateString()}:</strong> 
+                      <em className="ml-2 text-muted-foreground">{p.products}</em>
+                    </span>
+                    <strong>${p.total_price.toFixed(2)}</strong>
+                  </div>
+                ))
+              ) : (
+                // If the array is empty after loading, show a message.
+                <p className="text-muted-foreground">No purchase history found for this client.</p>
+              )}
             </div>
           </div>
 
-          {/* Repair History Section (Placeholder) */}
+          {/* Repair History Section (still a placeholder) */}
           <div>
             <h3 className="text-lg font-semibold mb-2">Repair History</h3>
-            <div className="border rounded-lg p-4 h-32 flex items-center justify-center">
+            <div className="border rounded-lg p-4 min-h-[8rem] flex items-center justify-center">
               <p className="text-muted-foreground">Repair history will be displayed here.</p>
             </div>
           </div>

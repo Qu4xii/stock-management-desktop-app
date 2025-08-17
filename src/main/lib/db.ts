@@ -45,6 +45,33 @@ const createTables = (): void => {
   `
   // We can add more tables here later (repairs, purchases, etc.)
 
+   // This table stores the main record of a transaction.
+  const createPurchasesTable = `
+    CREATE TABLE IF NOT EXISTS purchases (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id INTEGER NOT NULL,
+      purchase_date TEXT NOT NULL,
+      total_price REAL NOT NULL,
+      FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE CASCADE
+    );
+  `;
+
+  // This is a "join table". It stores each individual item within a purchase.
+  const createPurchaseItemsTable = `
+    CREATE TABLE IF NOT EXISTS purchase_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      purchase_id INTEGER NOT NULL,
+      product_id INTEGER NOT NULL,
+      quantity_purchased INTEGER NOT NULL,
+      price_at_purchase REAL NOT NULL, -- Store the price in case the product's main price changes later
+      FOREIGN KEY (purchase_id) REFERENCES purchases (id) ON DELETE CASCADE,
+      FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE SET NULL
+    );
+  `;
+
+  db.exec(createPurchasesTable);
+  db.exec(createPurchaseItemsTable);
+
   // Execute the SQL commands.
   db.exec(createClientsTable)
   db.exec(createProductsTable)
@@ -133,4 +160,68 @@ export const productsApi = {
     const stmt = db.prepare('DELETE FROM products WHERE id = ?');
     stmt.run(id);
   },
+};
+
+export const purchasesApi = {
+  // READ: Get all purchases for a specific client
+  getForClient: (clientId: number): any[] => {
+    const stmt = db.prepare(`
+      SELECT 
+        p.id, 
+        p.purchase_date, 
+        p.total_price,
+        GROUP_CONCAT(prod.name, ', ') as products
+      FROM purchases p
+      JOIN purchase_items pi ON p.id = pi.purchase_id
+      JOIN products prod ON pi.product_id = prod.id
+      WHERE p.client_id = ?
+      GROUP BY p.id
+      ORDER BY p.purchase_date DESC
+    `);
+    return stmt.all(clientId);
+  },
+
+  // CREATE: A new purchase (this is the complex transaction)
+  create: (clientId: number, items: { id: number; quantity: number }[]): { id: number } => {
+    // Use a transaction to ensure all or no database changes are made.
+    const transaction = db.transaction(() => {
+      let totalPrice = 0;
+
+      // First, get the current price for each product and calculate the total.
+      const itemsWithPrice = items.map(item => {
+        const product = productsApi.getById(item.id);
+        if (!product || product.quantity < item.quantity) {
+          throw new Error(`Not enough stock for product ID ${item.id}.`);
+        }
+        totalPrice += product.price * item.quantity;
+        return { ...item, price_at_purchase: product.price };
+      });
+      
+      // 1. Create the main purchase record
+      const purchaseStmt = db.prepare(
+        'INSERT INTO purchases (client_id, purchase_date, total_price) VALUES (?, ?, ?)'
+      );
+      const purchaseInfo = purchaseStmt.run(clientId, new Date().toISOString(), totalPrice);
+      const purchaseId = purchaseInfo.lastInsertRowid;
+
+      // 2. Create a record for each item in the purchase
+      const itemStmt = db.prepare(
+        'INSERT INTO purchase_items (purchase_id, product_id, quantity_purchased, price_at_purchase) VALUES (?, ?, ?, ?)'
+      );
+      const updateStockStmt = db.prepare(
+        'UPDATE products SET quantity = quantity - ? WHERE id = ?'
+      );
+
+      for (const item of itemsWithPrice) {
+        // 2a. Insert the purchase item line
+        itemStmt.run(purchaseId, item.id, item.quantity, item.price_at_purchase);
+        // 2b. Update the product's stock quantity
+        updateStockStmt.run(item.quantity, item.id);
+      }
+
+      return { id: Number(purchaseId) };
+    });
+
+    return transaction();
+  }
 };

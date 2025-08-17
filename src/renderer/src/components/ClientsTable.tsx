@@ -23,12 +23,13 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 
-// --- ADD NEW PROPS FOR THE ACTIONS ---
+// --- THIS IS THE INTERFACE THAT NEEDS TO BE FIXED ---
 interface ClientsTableProps {
   clients: Client[];
   onView: (client: Client) => void;
   onEdit: (client: Client) => void;
   onDelete: (clientId: number) => void;
+  onNewPurchase: (client: Client) => void; // <-- FIX #1: Add the missing prop definition
 }
 
 const getInitials = (name: string): string => {
@@ -39,11 +40,14 @@ const getInitials = (name: string): string => {
   return name[0] ? name[0].toUpperCase() : '';
 };
 
-function ClientsTable({ clients, onView, onEdit, onDelete }: ClientsTableProps): JSX.Element {
+// --- THIS IS THE FUNCTION SIGNATURE THAT NEEDS TO BE FIXED ---
+// We need to add 'onNewPurchase' to the list of props we are receiving.
+function ClientsTable({ clients, onView, onEdit, onDelete, onNewPurchase }: ClientsTableProps): JSX.Element {
   return (
     <Card>
       <Table>
         <TableHeader>
+          {/* ... TableHeader content remains the same ... */}
           <TableRow>
             <TableHead className="w-[80px]">Image</TableHead>
             <TableHead>Name & Email</TableHead>
@@ -61,6 +65,7 @@ function ClientsTable({ clients, onView, onEdit, onDelete }: ClientsTableProps):
           ) : (
             clients.map((client) => (
               <TableRow key={client.id}>
+                {/* ... TableCell for Avatar, Name, ID Card ... */}
                 <TableCell>
                   <Avatar>
                     <AvatarImage src={client.picture} alt={client.name} />
@@ -76,7 +81,6 @@ function ClientsTable({ clients, onView, onEdit, onDelete }: ClientsTableProps):
                   <div className="text-sm text-muted-foreground">{client.phone}</div>
                 </TableCell>
                 <TableCell className="text-right">
-                  {/* --- NEW ACTION DROPDOWN FOR CLIENTS --- */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -88,6 +92,10 @@ function ClientsTable({ clients, onView, onEdit, onDelete }: ClientsTableProps):
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => onView(client)}>
                         View Details
+                      </DropdownMenuItem>
+                      {/* --- THIS IS THE NEW MENU ITEM --- */}
+                      <DropdownMenuItem onClick={() => onNewPurchase(client)}>
+                        New Purchase
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onEdit(client)}>
                         Edit
@@ -116,3 +124,4 @@ function ClientsTable({ clients, onView, onEdit, onDelete }: ClientsTableProps):
 }
 
 export default ClientsTable;
+

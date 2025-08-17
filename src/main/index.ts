@@ -6,6 +6,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { clientsApi } from './lib/db' // <-- Import our new database API
 import { productsApi } from './lib/db'; // <-- ADD productsApi HERE
+import { purchasesApi } from './lib/db'; // <-- ADD purchasesApi
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 1200,
@@ -105,6 +106,14 @@ ipcMain.handle('db:products-getAll', () => {
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+
+  // --- PURCHASES IPC API ---
+  ipcMain.handle('db:purchases-create', (_event, { clientId, items }) => {
+    return purchasesApi.create(clientId, items);
+  });
+  ipcMain.handle('db:purchases-getForClient', (_event, clientId) => {
+    return purchasesApi.getForClient(clientId);
+  });
 })
 
 app.on('window-all-closed', () => {

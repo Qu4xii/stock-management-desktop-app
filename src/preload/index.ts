@@ -16,6 +16,8 @@ import { electronAPI } from '@electron-toolkit/preload' // Keep this from the bo
 // 'types' -> Go down into 'types'
 import { Client, DBApi } from '../renderer/src/types/index';
 import {  Product,} from '../renderer/src/types'; 
+import {  Purchase,  } from '../renderer/src/types'; // <-- ADD Purchase
+
 // --- OUR CUSTOM DATABASE API ---
 const dbApi = {
   // READ: Get all clients
@@ -38,6 +40,10 @@ const dbApi = {
   addProduct: (productData) => ipcRenderer.invoke('db:products-add', productData),
   updateProduct: (productData) => ipcRenderer.invoke('db:products-update', productData),
   deleteProduct: (productId) => ipcRenderer.invoke('db:products-delete', productId),
+
+
+  createPurchase: (data) => ipcRenderer.invoke('db:purchases-create', data),
+  getPurchasesForClient: (clientId) => ipcRenderer.invoke('db:purchases-getForClient', clientId),
 }
 
 

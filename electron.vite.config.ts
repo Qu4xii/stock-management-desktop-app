@@ -9,6 +9,7 @@ export default defineConfig({
       alias: {
         "@/lib": resolve("src/main/lib"),
         "@/shared": resolve("src/shared"),
+        
       },
     },
   },
@@ -18,12 +19,15 @@ export default defineConfig({
   renderer: {
     resolve: {
       alias: {
+        '@': resolve('src/renderer/src'),
+        "@/utils": resolve("src/renderer/src/utils"),
         "@renderer": resolve("src/renderer/src"),
         "@shared": resolve("src/shared"),
         "@/components": resolve("src/renderer/src/components"),
-        "@/utils": resolve("src/renderer/src/utils"),
+        
         "@/hooks": resolve("src/renderer/src/hooks"),
         '@types': resolve('src/renderer/src/types'),
+        
       },
     },
     plugins: [react()],

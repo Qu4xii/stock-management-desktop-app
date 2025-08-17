@@ -8,13 +8,14 @@ import EditClientDialog from '../components/EditClientDialog';
 import ViewClientDialog from '../components/ViewClientDialog';
 import { Button } from '../components/ui/button';
 import { Client } from '../types';
-
+import CreatePurchaseDialog from '../components/CreatePurchaseDialog';
 function ClientsPage(): JSX.Element {
   // The master list of clients, now loaded from the database.
   const [clients, setClients] = useState<Client[]>([]);
   // State to manage which client is being edited or viewed.
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
+  const [purchasingClient, setPurchasingClient] = useState<Client | null>(null);
 
   // --- NEW: FUNCTION TO LOAD DATA FROM BACKEND ---
   const fetchClients = useCallback(async () => {
@@ -46,6 +47,12 @@ function ClientsPage(): JSX.Element {
     fetchClients(); // Refresh the list
   };
 
+   const handlePurchaseCreated = () => {
+    // We could show a success toast here later
+    console.log('Purchase created!');
+    // No need to fetch clients, but we might need to refresh other data later
+  };
+
   return (
     <div className="flex flex-col gap-8 h-full">
       <div className="flex justify-between items-center">
@@ -66,6 +73,7 @@ function ClientsPage(): JSX.Element {
         onView={setViewingClient}
         onEdit={setEditingClient}
         onDelete={handleDeleteClient}
+        onNewPurchase={setPurchasingClient}
       />
 
       <EditClientDialog
@@ -79,7 +87,14 @@ function ClientsPage(): JSX.Element {
         isOpen={!!viewingClient}
         onClose={() => setViewingClient(null)}
       />
+       <CreatePurchaseDialog
+        client={purchasingClient}
+        isOpen={!!purchasingClient}
+        onClose={() => setPurchasingClient(null)}
+        onPurchaseCreated={handlePurchaseCreated}
+      />
     </div>
+    
   );
 }
 
