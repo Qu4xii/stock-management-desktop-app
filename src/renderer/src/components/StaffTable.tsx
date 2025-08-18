@@ -1,7 +1,7 @@
 // In src/renderer/src/components/StaffTable.tsx
 
 import React from 'react';
-import { StaffMember } from '../types';
+import { StaffMember, StaffRole } from '../types';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -12,43 +12,45 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from './ui/dropdown-menu';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from './ui/select';
 
+// Define the props this component now requires.
 interface StaffTableProps {
   staff: StaffMember[];
   onEdit: (staffMember: StaffMember) => void;
   onDelete: (staffMemberId: number) => void;
+  onUpdate: (updatedStaffMember: StaffMember) => void; // <-- The new prop for inline edits
 }
 
-// --- THIS IS THE CORRECTED FUNCTION ---
-// This version of the function correctly implements the logic and always returns a string.
+const roles: StaffRole[] = ['Technician', 'Inventory Associate', 'Cashier', 'Manager'];
+
 const getInitials = (name: string = ''): string => {
-  if (!name) return ''; // Handle empty or null names gracefully
+  if (!name) return '';
   const names = name.split(' ');
-  // Get the first letter of the first name
   const firstInitial = names[0] ? names[0][0] : '';
-  // Get the first letter of the last name (if it exists)
   const lastInitial = names.length > 1 ? names[names.length - 1][0] : '';
   return `${firstInitial}${lastInitial}`.toUpperCase();
 };
 
-function StaffTable({ staff, onEdit, onDelete }: StaffTableProps): JSX.Element {
+function StaffTable({ staff, onEdit, onDelete, onUpdate }: StaffTableProps): JSX.Element {
   return (
     <Card>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Technician Name</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Availability</TableHead>
+            <TableHead className="w-[200px]">Role</TableHead>
+            <TableHead className="w-[150px]">Availability</TableHead>
             <TableHead>Contact</TableHead>
-            <TableHead>Phone</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {staff.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+              <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                 No staff members found.
               </TableCell>
             </TableRow>
@@ -62,20 +64,45 @@ function StaffTable({ staff, onEdit, onDelete }: StaffTableProps): JSX.Element {
                   </Avatar>
                   {member.name}
                 </TableCell>
-                <TableCell>{member.role}</TableCell>
+                
+                {/* --- Interactive Role Dropdown --- */}
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                    member.isAvailable
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                  }`}>
-                    {member.isAvailable ? 'Available' : 'Busy'}
-                  </span>
+                  <Select
+                    value={member.role}
+                    onValueChange={(newRole: StaffRole) => {
+                      onUpdate({ ...member, role: newRole });
+                    }}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {roles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </TableCell>
+
+                {/* --- Interactive Availability Dropdown --- */}
+                <TableCell>
+                  <Select
+                    value={member.isAvailable ? 'available' : 'busy'}
+                    onValueChange={(newAvailability) => {
+                      onUpdate({ ...member, isAvailable: newAvailability === 'available' });
+                    }}
+                  >
+                    <SelectTrigger className={member.isAvailable ? 'border-green-500' : 'border-red-500'}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="available">Available</SelectItem>
+                      <SelectItem value="busy">Busy</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                
                 <TableCell>
                   <a href={`mailto:${member.email}`} className="text-blue-500 hover:underline">{member.email}</a>
+                  <div className="text-sm text-muted-foreground">{member.phone}</div>
                 </TableCell>
-                <TableCell>{member.phone}</TableCell>
+
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -83,7 +110,7 @@ function StaffTable({ staff, onEdit, onDelete }: StaffTableProps): JSX.Element {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => onEdit(member)}>Edit</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onEdit(member)}>Edit Full Details</DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => {
