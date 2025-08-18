@@ -42,7 +42,7 @@ const dbApi: DBApi = {
   addRepair: (data) => ipcRenderer.invoke('db:repairs-add', data),
   updateRepair: (data) => ipcRenderer.invoke('db:repairs-update', data),
   deleteRepair: (id) => ipcRenderer.invoke('db:repairs-delete', id),
-  
+   getRepairsForClient: (clientId: number) => ipcRenderer.invoke('db:repairs-getForClient', clientId),
 };
 
 // --- SECURELY EXPOSE THE APIS ---

@@ -94,7 +94,7 @@ app.whenReady().then(() => {
     return purchasesApi.getForClient(clientId);
   });
 
-  // --- REPAIRS IPC API (WITH ERROR LOGGING) ---
+  // --- REPAIRS IPC API ---
   ipcMain.handle('db:repairs-getAll', async () => {
     try {
       return await repairsApi.getAll();
@@ -103,15 +103,23 @@ app.whenReady().then(() => {
       throw error;
     }
   });
-
+  
   // --- THIS IS THE FIX ---
-  // Added a try...catch block to the 'add' handler to find the error.
+  // Added the missing handler for getting repairs for a specific client.
+  ipcMain.handle('db:repairs-getForClient', (_event, clientId) => {
+    try {
+      return repairsApi.getForClient(clientId);
+    } catch (error) {
+      console.error(`DATABASE ERROR - Failed to get repairs for client ${clientId}:`, error);
+      throw error;
+    }
+  });
+
   ipcMain.handle('db:repairs-add', (_event, data) => {
     try {
       const record = repairsApi.add(data);
       return repairsApi.getById(record.id);
     } catch (error) {
-      // This will print the specific database error to your terminal.
       console.error('DATABASE ERROR - Failed to add repair:', error);
       throw error;
     }

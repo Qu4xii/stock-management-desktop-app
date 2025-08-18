@@ -70,7 +70,8 @@ export interface DBApi {
   createPurchase: (data: { clientId: number; items: { id: number; quantity: number }[] }) => Promise<{ id: number }>;
   getPurchasesForClient: (clientId: number) => Promise<Purchase[]>;
 
-    
+  // Repair Methods
+  getRepairsForClient: (clientId: number) => Promise<Repair[]>;
   getRepairs: () => Promise<Repair[]>;
   addRepair: (repairData: Omit<Repair, 'id' | 'clientName' | 'staffName' | 'clientLocation'>) => Promise<Repair>;
   updateRepair: (repairData: Repair) => Promise<Repair>;

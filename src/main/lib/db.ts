@@ -194,6 +194,21 @@ export const repairsApi = {
     return db.prepare(query).all() as Repair[];
   },
 
+  // READ: Get all repairs for a specific client ID.
+  getForClient: (clientId: number): Repair[] => {
+    const query = `
+      SELECT
+        r.id, r.description, r.status, r.priority, r.requestDate, r.dueDate, r.totalPrice,
+        r.clientId, r.staffId, s.name AS staffName
+      FROM repairs r
+      LEFT JOIN staff s ON r.staffId = s.id
+      WHERE r.clientId = ?
+      ORDER BY r.requestDate DESC
+    `;
+    // We pass the clientId as a parameter to the query.
+    return db.prepare(query).all(clientId) as Repair[];
+  },
+  
   // Helper to get a single repair by ID with joined data
   getById: (id: number | bigint): Repair => {
     const query = `

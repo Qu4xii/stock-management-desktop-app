@@ -1,9 +1,8 @@
 // In src/renderer/src/components/ViewClientDialog.tsx
 
-// --- 1. IMPORT THE NECESSARY REACT HOOKS AND TYPES ---
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { Client, Purchase } from '../types'; // Import both Client and Purchase types
+import { Client, Purchase, Repair } from '../types'; // Import Repair
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 interface ViewClientDialogProps {
@@ -12,35 +11,45 @@ interface ViewClientDialogProps {
   onClose: () => void;
 }
 
+// --- THIS IS THE FIX ---
+// The full implementation of the function is restored here.
 const getInitials = (name: string = ''): string => {
+  // Split the name into parts.
   const names = name.split(' ');
+  // If there are multiple parts, take the first letter of the first and last parts.
   if (names.length > 1) {
     return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
   }
+  // Otherwise, just take the first letter of the single name.
   return name[0] ? name[0].toUpperCase() : '';
 };
 
 function ViewClientDialog({ client, isOpen, onClose }: ViewClientDialogProps): JSX.Element {
-  // --- 2. CREATE STATE TO STORE THE FETCHED PURCHASES ---
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [repairs, setRepairs] = useState<Repair[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- 3. USE useEffect TO FETCH DATA WHEN THE DIALOG OPENS ---
   useEffect(() => {
-    // This effect runs whenever 'isOpen' or 'client' changes.
     if (isOpen && client) {
       setIsLoading(true);
-      // Call the backend API function we defined in the preload script.
-      window.db.getPurchasesForClient(client.id)
-        .then(fetchedPurchases => {
-          setPurchases(fetchedPurchases);
-        })
-        .catch(console.error)
-        .finally(() => setIsLoading(false));
-    }
-  }, [isOpen, client]); // The dependency array ensures this runs at the right time.
 
-  if (!client) return <></>; // Render nothing if no client is selected.
+      Promise.all([
+        window.db.getPurchasesForClient(client.id),
+        window.db.getRepairsForClient(client.id)
+      ])
+      .then(([fetchedPurchases, fetchedRepairs]) => {
+        setPurchases(fetchedPurchases);
+        setRepairs(fetchedRepairs);
+      })
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
+    }
+  }, [isOpen, client]);
+
+  // This check MUST come AFTER the hooks to comply with Rules of Hooks.
+  if (!client) {
+    return <></>;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -61,7 +70,6 @@ function ViewClientDialog({ client, isOpen, onClose }: ViewClientDialogProps): J
         </DialogHeader>
         
         <div className="py-4 space-y-6">
-          {/* Contact Info Section (no changes here) */}
           <div>
             <h3 className="text-lg font-semibold mb-2">Contact Information</h3>
             <div className="text-sm text-muted-foreground grid grid-cols-2 gap-2">
@@ -71,14 +79,12 @@ function ViewClientDialog({ client, isOpen, onClose }: ViewClientDialogProps): J
             </div>
           </div>
 
-          {/* --- 4. UPDATE THE PURCHASE HISTORY SECTION TO DISPLAY REAL DATA --- */}
           <div>
             <h3 className="text-lg font-semibold mb-2">Purchase History</h3>
             <div className="border rounded-lg p-4 min-h-[8rem] space-y-2">
               {isLoading ? (
                 <p className="text-muted-foreground">Loading history...</p>
               ) : purchases.length > 0 ? (
-                // If purchases are found, map over them and display the details.
                 purchases.map(p => (
                   <div key={p.id} className="text-sm flex justify-between">
                     <span>
@@ -89,17 +95,29 @@ function ViewClientDialog({ client, isOpen, onClose }: ViewClientDialogProps): J
                   </div>
                 ))
               ) : (
-                // If the array is empty after loading, show a message.
                 <p className="text-muted-foreground">No purchase history found for this client.</p>
               )}
             </div>
           </div>
 
-          {/* Repair History Section (still a placeholder) */}
           <div>
             <h3 className="text-lg font-semibold mb-2">Repair History</h3>
-            <div className="border rounded-lg p-4 min-h-[8rem] flex items-center justify-center">
-              <p className="text-muted-foreground">Repair history will be displayed here.</p>
+            <div className="border rounded-lg p-4 min-h-[8rem] space-y-2">
+              {isLoading ? (
+                <p className="text-muted-foreground">Loading history...</p>
+              ) : repairs.length > 0 ? (
+                repairs.map(r => (
+                  <div key={r.id} className="text-sm flex justify-between items-center">
+                    <span>
+                      <strong>{new Date(r.requestDate).toLocaleDateString()}:</strong>
+                      <em className="ml-2 text-muted-foreground max-w-xs truncate">{r.description}</em>
+                    </span>
+                    <span className="font-semibold">{r.status}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground">No repair history found for this client.</p>
+              )}
             </div>
           </div>
         </div>
