@@ -15,8 +15,8 @@ function Sidebar(): JSX.Element {
   return (
     <aside className="w-64 bg-slate-900 text-slate-100 p-4 flex flex-col flex-shrink-0">
       <div className="mb-8 text-center">
-        <h2 className="text-2xl font-bold">StockApp</h2>
-        <p className="text-sm text-slate-400">by Sousou</p>
+        <h2 className="text-2xl font-bold">Stock and Repair Tracker</h2>
+        <p className="text-sm text-slate-400">by Mohamed ahmed miled</p>
       </div>
       <nav className="flex flex-col space-y-2">
         {/* Dashboard Link */}
@@ -76,10 +76,16 @@ function Sidebar(): JSX.Element {
         </Link>
 
         {/* Repairs Link (placeholder) */}
-        <a href="#" className="flex items-center p-2 rounded-md opacity-50 cursor-not-allowed">
+        <Link
+          to="/repairs"
+          className={`flex items-center p-2 rounded-md transition-colors ${
+            isActive('/repairs') ? 'bg-slate-700' : 'hover:bg-slate-700'
+          }`}
+        >
           <Wrench className="w-5 h-5 mr-3" />
           Repairs
-        </a>
+        </Link>
+
       </nav>
     </aside>
   );

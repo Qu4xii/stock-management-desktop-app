@@ -40,7 +40,7 @@ function StaffTable({ staff, onEdit, onDelete, onUpdate }: StaffTableProps): JSX
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Technician Name</TableHead>
+            <TableHead>Worker Name</TableHead>
             <TableHead className="w-[200px]">Role</TableHead>
             <TableHead className="w-[150px]">Availability</TableHead>
             <TableHead>Contact</TableHead>

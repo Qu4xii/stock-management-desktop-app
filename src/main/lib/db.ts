@@ -3,11 +3,11 @@
 import path from 'path'
 import { app } from 'electron'
 import Database from 'better-sqlite3'
-import { StaffMember } from '../../renderer/src/types';
+import { StaffMember, Repair, Client, Product } from '../../renderer/src/types'; // Import all necessary types
+
 // --- DATABASE SETUP ---
 
 // Define the path for the database file.
-// app.getPath('userData') is the standard, safe place to store app data.
 const dbPath = path.join(app.getPath('userData'), 'stockapp.db')
 
 // Initialize the database connection.
@@ -22,280 +22,255 @@ db.pragma('journal_mode = WAL')
  * if they haven't been created already.
  */
 const createTables = (): void => {
-  // SQL for the 'clients' table, matching our Client type.
-  const createClientsTable = `
-    CREATE TABLE IF NOT EXISTS clients (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      idCard TEXT UNIQUE NOT NULL,
-      address TEXT,
-      email TEXT,
-      phone TEXT,
-      picture TEXT
-    );
-  `
-  // SQL for the 'products' table.
-  const createProductsTable = `
-    CREATE TABLE IF NOT EXISTS products (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      quantity INTEGER DEFAULT 0,
-      price REAL NOT NULL
-    );
-  `
-  // We can add more tables here later (repairs, purchases, etc.)
+  // Use a transaction for initial setup to ensure all tables are created together.
+  db.transaction(() => {
+    // SQL for the 'clients' table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS clients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        idCard TEXT UNIQUE NOT NULL,
+        address TEXT,
+        email TEXT,
+        phone TEXT,
+        picture TEXT
+      );
+    `);
+    
+    // SQL for the 'products' table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        quantity INTEGER DEFAULT 0,
+        price REAL NOT NULL
+      );
+    `);
+    
+    // SQL for the 'staff' table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS staff (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        role TEXT NOT NULL,
+        isAvailable INTEGER NOT NULL DEFAULT 1, -- 1 for true, 0 for false
+        email TEXT UNIQUE NOT NULL,
+        phone TEXT,
+        picture TEXT
+      );
+    `);
 
-   // This table stores the main record of a transaction.
-  const createPurchasesTable = `
-    CREATE TABLE IF NOT EXISTS purchases (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      client_id INTEGER NOT NULL,
-      purchase_date TEXT NOT NULL,
-      total_price REAL NOT NULL,
-      FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE CASCADE
-    );
-  `;
-
-  // This is a "join table". It stores each individual item within a purchase.
-  const createPurchaseItemsTable = `
-    CREATE TABLE IF NOT EXISTS purchase_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      purchase_id INTEGER NOT NULL,
-      product_id INTEGER NOT NULL,
-      quantity_purchased INTEGER NOT NULL,
-      price_at_purchase REAL NOT NULL, -- Store the price in case the product's main price changes later
-      FOREIGN KEY (purchase_id) REFERENCES purchases (id) ON DELETE CASCADE,
-      FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE SET NULL
-    );
-  `;
-
-
-  const createStaffTable = `
-    CREATE TABLE IF NOT EXISTS staff (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      role TEXT NOT NULL,
-      isAvailable INTEGER NOT NULL DEFAULT 1, -- 1 for true (Available), 0 for false (Busy)
-      email TEXT UNIQUE NOT NULL,
-      phone TEXT,
-      picture TEXT
-    );
-  `;
-
-  db.exec(createStaffTable);
-  db.exec(createPurchasesTable);
-  db.exec(createPurchaseItemsTable);
-
-  // Execute the SQL commands.
-  db.exec(createClientsTable)
-  db.exec(createProductsTable)
+    // SQL for the 'repairs' table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS repairs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        description TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'Not Started',
+        priority TEXT NOT NULL DEFAULT 'Medium',
+        requestDate TEXT NOT NULL,
+        dueDate TEXT,
+        totalPrice REAL,
+        clientId INTEGER NOT NULL,
+        staffId INTEGER,
+        FOREIGN KEY (clientId) REFERENCES clients (id) ON DELETE CASCADE,
+        FOREIGN KEY (staffId) REFERENCES staff (id) ON DELETE SET NULL
+      );
+    `);
+    
+    // SQL for the 'purchases' table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS purchases (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id INTEGER NOT NULL,
+        purchase_date TEXT NOT NULL,
+        total_price REAL NOT NULL,
+        FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE CASCADE
+      );
+    `);
+    
+    // SQL for the 'purchase_items' join table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS purchase_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        purchase_id INTEGER NOT NULL,
+        product_id INTEGER,
+        quantity_purchased INTEGER NOT NULL,
+        price_at_purchase REAL NOT NULL,
+        FOREIGN KEY (purchase_id) REFERENCES purchases (id) ON DELETE CASCADE,
+        FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE SET NULL
+      );
+    `);
+  })();
 }
 
 // Run the table creation function immediately.
 createTables()
 
 // --- CLIENTS API ---
-// A collection of functions for interacting with the 'clients' table.
-
 export const clientsApi = {
-  // READ: Get all clients
-  getAll: (): any[] => {
-    const stmt = db.prepare('SELECT * FROM clients ORDER BY name ASC')
-    return stmt.all()
+  getAll: (): Client[] => {
+    return db.prepare('SELECT * FROM clients ORDER BY name ASC').all() as Client[];
   },
-
-  // CREATE: Add a new client
-  add: (clientData: any): { id: number } => {
-    const stmt = db.prepare(
-      'INSERT INTO clients (name, idCard, address, email, phone) VALUES (@name, @idCard, @address, @email, @phone)'
-    )
-    const info = stmt.run(clientData)
-    return { id: Number(info.lastInsertRowid) }
-  },
-  
-  // A helper to get a single client by ID
-  getById: (id: number): any => {
-    return db.prepare('SELECT * FROM clients WHERE id = ?').get(id)
-  },
-  
-  // UPDATE: Update an existing client
-  update: (clientData: any): void => {
-    const stmt = db.prepare(
-      'UPDATE clients SET name = @name, idCard = @idCard, address = @address, email = @email, phone = @phone WHERE id = @id'
-    )
-    stmt.run(clientData)
-  },
-
-  // DELETE: Remove a client
-  delete: (id: number): void => {
-    const stmt = db.prepare('DELETE FROM clients WHERE id = ?')
-    stmt.run(id)
-  },
-}
-
-// We will add a productsApi object here next.
-// In src/main/lib/db.ts
-
-// ... (your existing db setup and clientsApi object) ...
-
-// --- ADD THE PRODUCTS API OBJECT BELOW ---
-
-export const productsApi = {
-  // READ: Get all products
-  getAll: (): any[] => {
-    const stmt = db.prepare('SELECT * FROM products ORDER BY name ASC');
-    return stmt.all();
-  },
-
-  // CREATE: Add a new product
-  add: (productData: any): { id: number } => {
-    const stmt = db.prepare(
-      'INSERT INTO products (name, quantity, price) VALUES (@name, @quantity, @price)'
-    );
-    const info = stmt.run(productData);
+  add: (clientData: Omit<Client, 'id' | 'picture'>): { id: number } => {
+    const info = db.prepare('INSERT INTO clients (name, idCard, address, email, phone) VALUES (@name, @idCard, @address, @email, @phone)').run(clientData);
     return { id: Number(info.lastInsertRowid) };
   },
-  
-  // Helper to get a single product by ID
-  getById: (id: number): any => {
-    return db.prepare('SELECT * FROM products WHERE id = ?').get(id);
+  getById: (id: number): Client => {
+    return db.prepare('SELECT * FROM clients WHERE id = ?').get(id) as Client;
   },
-  
-  // UPDATE: Update an existing product
-  update: (productData: any): void => {
-    const stmt = db.prepare(
-      'UPDATE products SET name = @name, quantity = @quantity, price = @price WHERE id = @id'
-    );
-    stmt.run(productData);
+  update: (clientData: Client): void => {
+    db.prepare('UPDATE clients SET name = @name, idCard = @idCard, address = @address, email = @email, phone = @phone WHERE id = @id').run(clientData);
   },
-
-  // DELETE: Remove a product
   delete: (id: number): void => {
-    const stmt = db.prepare('DELETE FROM products WHERE id = ?');
-    stmt.run(id);
+    db.prepare('DELETE FROM clients WHERE id = ?').run(id);
   },
 };
 
+// --- PRODUCTS API ---
+export const productsApi = {
+  getAll: (): Product[] => {
+    return db.prepare('SELECT * FROM products ORDER BY name ASC').all() as Product[];
+  },
+  add: (productData: Omit<Product, 'id'>): { id: number } => {
+    const info = db.prepare('INSERT INTO products (name, quantity, price) VALUES (@name, @quantity, @price)').run(productData);
+    return { id: Number(info.lastInsertRowid) };
+  },
+  getById: (id: number): Product => {
+    return db.prepare('SELECT * FROM products WHERE id = ?').get(id) as Product;
+  },
+  update: (productData: Product): void => {
+    db.prepare('UPDATE products SET name = @name, quantity = @quantity, price = @price WHERE id = @id').run(productData);
+  },
+  delete: (id: number): void => {
+    db.prepare('DELETE FROM products WHERE id = ?').run(id);
+  },
+};
 
+// --- STAFF API ---
+export const staffApi = {
+  getAll: (): StaffMember[] => {
+    const staffMembers = db.prepare('SELECT * FROM staff ORDER BY name ASC').all() as any[];
+    return staffMembers.map(member => ({ ...member, isAvailable: member.isAvailable === 1 }));
+  },
+  add: (staffData: Omit<StaffMember, 'id' | 'picture'>): { id: number } => {
+    const info = db.prepare('INSERT INTO staff (name, role, isAvailable, email, phone) VALUES (@name, @role, @isAvailable, @email, @phone)').run({ ...staffData, isAvailable: staffData.isAvailable ? 1 : 0 });
+    return { id: Number(info.lastInsertRowid) };
+  },
+  getById: (id: number): StaffMember => {
+    const member = db.prepare('SELECT * FROM staff WHERE id = ?').get(id) as any;
+    return { ...member, isAvailable: member.isAvailable === 1 };
+  },
+  update: (staffData: StaffMember): void => {
+    db.prepare('UPDATE staff SET name = @name, role = @role, isAvailable = @isAvailable, email = @email, phone = @phone WHERE id = @id').run({ ...staffData, isAvailable: staffData.isAvailable ? 1 : 0 });
+  },
+  delete: (id: number): void => {
+    db.prepare('DELETE FROM staff WHERE id = ?').run(id);
+  },
+};
 
+// --- REPAIRS API (CORRECTED & ADDED) ---
+export const repairsApi = {
+  // READ: Get all repairs, joining with clients and staff to get their names
+  getAll: (): Repair[] => {
+    const query = `
+      SELECT
+        r.id,
+        r.description,
+        r.status,
+        r.priority,
+        r.requestDate,
+        r.dueDate,
+        r.totalPrice,
+        r.clientId,
+        r.staffId,
+        c.name AS clientName,
+        c.address AS clientLocation,
+        s.name AS staffName
+      FROM repairs r
+      JOIN clients c ON r.clientId = c.id
+      LEFT JOIN staff s ON r.staffId = s.id
+      ORDER BY r.requestDate DESC
+    `;
+    return db.prepare(query).all() as Repair[];
+  },
+
+  // Helper to get a single repair by ID with joined data
+  getById: (id: number | bigint): Repair => {
+    const query = `
+      SELECT
+        r.id, r.description, r.status, r.priority, r.requestDate, r.dueDate, r.totalPrice,
+        r.clientId, r.staffId, c.name AS clientName, c.address AS clientLocation, s.name AS staffName
+      FROM repairs r
+      JOIN clients c ON r.clientId = c.id
+      LEFT JOIN staff s ON r.staffId = s.id
+      WHERE r.id = ?
+    `;
+    return db.prepare(query).get(id) as Repair;
+  },
+
+  // CREATE: Add a new repair
+  add: (data: Omit<Repair, 'id' | 'clientName' | 'staffName' | 'clientLocation'>): { id: number } => {
+    const stmt = db.prepare(
+      'INSERT INTO repairs (description, status, priority, requestDate, dueDate, totalPrice, clientId, staffId) VALUES (@description, @status, @priority, @requestDate, @dueDate, @totalPrice, @clientId, @staffId)'
+    );
+    const info = stmt.run(data);
+    return { id: Number(info.lastInsertRowid) };
+  },
+  
+  // UPDATE: Update an existing repair
+  update: (data: Repair): void => {
+    const stmt = db.prepare(
+      'UPDATE repairs SET description = @description, status = @status, priority = @priority, dueDate = @dueDate, totalPrice = @totalPrice, clientId = @clientId, staffId = @staffId WHERE id = @id'
+    );
+    stmt.run(data);
+  },
+
+  // DELETE: Remove a repair
+  delete: (id: number): void => {
+    db.prepare('DELETE FROM repairs WHERE id = ?').run(id);
+  },
+};
+
+// --- PURCHASES API ---
 export const purchasesApi = {
-  // READ: Get all purchases for a specific client
   getForClient: (clientId: number): any[] => {
     const stmt = db.prepare(`
       SELECT 
-        p.id, 
-        p.purchase_date, 
-        p.total_price,
-        GROUP_CONCAT(prod.name, ', ') as products
+        p.id, p.purchase_date, p.total_price,
+        GROUP_CONCAT(prod.name || ' (x' || pi.quantity_purchased || ')', '; ') as products
       FROM purchases p
       JOIN purchase_items pi ON p.id = pi.purchase_id
-      JOIN products prod ON pi.product_id = prod.id
+      LEFT JOIN products prod ON pi.product_id = prod.id
       WHERE p.client_id = ?
       GROUP BY p.id
       ORDER BY p.purchase_date DESC
     `);
     return stmt.all(clientId);
   },
-
-  
-  // CREATE: A new purchase (this is the complex transaction)
   create: (clientId: number, items: { id: number; quantity: number }[]): { id: number } => {
-    // Use a transaction to ensure all or no database changes are made.
     const transaction = db.transaction(() => {
       let totalPrice = 0;
-
-      // First, get the current price for each product and calculate the total.
       const itemsWithPrice = items.map(item => {
         const product = productsApi.getById(item.id);
         if (!product || product.quantity < item.quantity) {
-          throw new Error(`Not enough stock for product ID ${item.id}.`);
+          throw new Error(`Not enough stock for "${product?.name || `ID ${item.id}`}". Available: ${product?.quantity || 0}, Requested: ${item.quantity}.`);
         }
         totalPrice += product.price * item.quantity;
         return { ...item, price_at_purchase: product.price };
       });
       
-      // 1. Create the main purchase record
-      const purchaseStmt = db.prepare(
-        'INSERT INTO purchases (client_id, purchase_date, total_price) VALUES (?, ?, ?)'
-      );
-      const purchaseInfo = purchaseStmt.run(clientId, new Date().toISOString(), totalPrice);
+      const purchaseInfo = db.prepare('INSERT INTO purchases (client_id, purchase_date, total_price) VALUES (?, ?, ?)').run(clientId, new Date().toISOString(), totalPrice);
       const purchaseId = purchaseInfo.lastInsertRowid;
 
-      // 2. Create a record for each item in the purchase
-      const itemStmt = db.prepare(
-        'INSERT INTO purchase_items (purchase_id, product_id, quantity_purchased, price_at_purchase) VALUES (?, ?, ?, ?)'
-      );
-      const updateStockStmt = db.prepare(
-        'UPDATE products SET quantity = quantity - ? WHERE id = ?'
-      );
+      const itemStmt = db.prepare('INSERT INTO purchase_items (purchase_id, product_id, quantity_purchased, price_at_purchase) VALUES (?, ?, ?, ?)');
+      const updateStockStmt = db.prepare('UPDATE products SET quantity = quantity - ? WHERE id = ?');
 
       for (const item of itemsWithPrice) {
-        // 2a. Insert the purchase item line
         itemStmt.run(purchaseId, item.id, item.quantity, item.price_at_purchase);
-        // 2b. Update the product's stock quantity
         updateStockStmt.run(item.quantity, item.id);
       }
-
       return { id: Number(purchaseId) };
     });
-
     return transaction();
   }
-
-  
-};
-
-// In src/main/lib/db.ts
-
-// ... (imports and other Api objects) ...
-
-export const staffApi = {
-  // READ: Get all staff members
-  getAll: (): StaffMember[] => {
-    const stmt = db.prepare('SELECT * FROM staff ORDER BY name ASC');
-    // We cast the raw database result to 'any[]' to bypass the strict type check for the conversion.
-    const staffMembers = stmt.all() as any[];
-
-    return staffMembers.map(member => ({
-      ...member,
-      // Now TypeScript allows the comparison because 'member' is treated as 'any'.
-      isAvailable: member.isAvailable === 1
-    }));
-  },
-
-  // CREATE: Add a new staff member
-  add: (staffData: Omit<StaffMember, 'id' | 'picture'>): { id: number } => {
-    const stmt = db.prepare(
-      'INSERT INTO staff (name, role, isAvailable, email, phone) VALUES (@name, @role, @isAvailable, @email, @phone)'
-    );
-    const info = stmt.run(staffData);
-    // FIX #2: Correct the typo from 'lastInsertRowid' to 'lastInsertRowid'
-    return { id: Number(info.lastInsertRowid) };
-  },
-  
-  // A helper to get a single staff member by ID
-  getById: (id: number): StaffMember => {
-    // Cast the raw database result to 'any' for the conversion.
-    const member = db.prepare('SELECT * FROM staff WHERE id = ?').get(id) as any;
-    
-    // Return the correctly typed StaffMember object with the boolean converted.
-    return {
-      ...member,
-      isAvailable: member.isAvailable === 1
-    };
-  },
-  
-  // UPDATE: Update an existing staff member
-  update: (staffData: StaffMember): void => {
-    const stmt = db.prepare(
-      'UPDATE staff SET name = @name, role = @role, isAvailable = @isAvailable, email = @email, phone = @phone WHERE id = @id'
-    );
-    stmt.run(staffData);
-  },
-
-  // DELETE: Remove a staff member
-  delete: (id: number): void => {
-    const stmt = db.prepare('DELETE FROM staff WHERE id = ?');
-    stmt.run(id);
-  },
 };

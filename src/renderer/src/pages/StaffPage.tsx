@@ -78,7 +78,7 @@ function StaffPage(): JSX.Element {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Technicians / Staff</h1>
+        <h1 className="text-3xl font-bold">Staff</h1>
         <div className="flex items-center gap-2">
           <Input 
             type="text"
@@ -90,7 +90,7 @@ function StaffPage(): JSX.Element {
           <AddStaffDialog onStaffAdded={handleAddStaff}>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              New Technician
+              New Worker
             </Button>
           </AddStaffDialog>
         </div>

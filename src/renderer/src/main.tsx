@@ -15,6 +15,7 @@ import ClientsPage from './pages/ClientsPage';
 import ProductsPage from './pages/ProductsPage'; 
 import StaffPage from './pages/StaffPage';
 import HistoryPage from './pages/HistoryPage';
+import RepairsPage from './pages/RepairsPage';
 
 /**
  * This is the router configuration for your application.
@@ -46,7 +47,11 @@ const router = createHashRouter([
       { 
         path: 'history', 
         element: <HistoryPage />
-      }
+      },
+      {
+        path: 'repairs', // <-- ADD THIS NEW ROUTE
+        element: <RepairsPage />
+      },
     ]
   }
 ]);

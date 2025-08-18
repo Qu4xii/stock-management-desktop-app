@@ -69,8 +69,33 @@ export interface DBApi {
   // Purchase Methods
   createPurchase: (data: { clientId: number; items: { id: number; quantity: number }[] }) => Promise<{ id: number }>;
   getPurchasesForClient: (clientId: number) => Promise<Purchase[]>;
+
+    
+  getRepairs: () => Promise<Repair[]>;
+  addRepair: (repairData: Omit<Repair, 'id' | 'clientName' | 'staffName' | 'clientLocation'>) => Promise<Repair>;
+  updateRepair: (repairData: Repair) => Promise<Repair>;
+  deleteRepair: (repairId: number) => Promise<void>;
 }
 
+export type RepairStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';
+export type RepairPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
+
+export interface Repair {
+  id: number;
+  description: string;
+  status: RepairStatus;
+  priority: RepairPriority;
+  requestDate: string; // ISO date string (e.g., "2024-08-15T12:00:00.000Z")
+  dueDate: string;     // ISO date string
+  totalPrice?: number
+  // These are foreign keys that link to other tables
+  clientId: number;
+staffId: number | null;
+  // These fields will be 'joined' in our database query for display purposes
+  clientName?: string;
+  clientLocation?: string;
+  staffName?: string;
+}
 /**
  * This extends the global 'Window' object type.
  * It tells TypeScript that our renderer process window will have a property

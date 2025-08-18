@@ -4,7 +4,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron';
 import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import icon from '../../resources/icon.png?asset';
-import { clientsApi, productsApi, purchasesApi, staffApi } from './lib/db';
+import { clientsApi, productsApi, purchasesApi, staffApi ,repairsApi } from './lib/db';
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -82,8 +82,6 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('db:staff-update', (_event, data) => {
     staffApi.update(data);
-    // --- THIS IS THE FIX ---
-    // Changed 'data..id' to 'data.id'
     return staffApi.getById(data.id);
   });
   ipcMain.handle('db:staff-delete', (_event, id) => staffApi.delete(id));
@@ -96,8 +94,50 @@ app.whenReady().then(() => {
     return purchasesApi.getForClient(clientId);
   });
 
-  createWindow();
+  // --- REPAIRS IPC API (WITH ERROR LOGGING) ---
+  ipcMain.handle('db:repairs-getAll', async () => {
+    try {
+      return await repairsApi.getAll();
+    } catch (error) {
+      console.error('DATABASE ERROR - Failed to get all repairs:', error);
+      throw error;
+    }
+  });
 
+  // --- THIS IS THE FIX ---
+  // Added a try...catch block to the 'add' handler to find the error.
+  ipcMain.handle('db:repairs-add', (_event, data) => {
+    try {
+      const record = repairsApi.add(data);
+      return repairsApi.getById(record.id);
+    } catch (error) {
+      // This will print the specific database error to your terminal.
+      console.error('DATABASE ERROR - Failed to add repair:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('db:repairs-update', (_event, data) => {
+    try {
+      repairsApi.update(data);
+      return repairsApi.getById(data.id);
+    } catch (error) {
+      console.error('DATABASE ERROR - Failed to update repair:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('db:repairs-delete', (_event, id) => {
+    try {
+      return repairsApi.delete(id);
+    } catch (error) {
+      console.error('DATABASE ERROR - Failed to delete repair:', error);
+      throw error;
+    }
+  });
+  
+  createWindow();
+  
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
