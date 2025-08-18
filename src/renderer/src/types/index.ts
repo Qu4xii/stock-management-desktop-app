@@ -1,52 +1,83 @@
 // In src/renderer/src/types/index.ts
 
+// --- Data Structure Definitions ---
+
 export interface Client {
   id: number;
   name: string;
   idCard: string;
-  address: string;  // <-- NEW FIELD
-  email: string;      // <-- NEW FIELD
-  phone: string;      // <-- NEW FIELD
-  picture?: string;   // <-- NEW, OPTIONAL FIELD (the '?' makes it optional)
+  address: string;
+  email: string;
+  phone: string;
+  picture?: string;
 }
+
 export interface Product {
   id: number;
   name: string;
   quantity: number;
   price: number;
-  // 'availability' can be derived from quantity > 0, but we can add it if needed.
 }
 
-// Define the shape of our new database API
-export interface DBApi {
-  getClients: () => Promise<Client[]>;
-  addClient: (clientData: Omit<Client, 'id' | 'picture'>) => Promise<Client>;
-  updateClient: (clientData: Client) => Promise<Client>;
-  deleteClient: (clientId: number) => Promise<void>;
-   getProducts: () => Promise<Product[]>;
-  addProduct: (productData: Omit<Product, 'id'>) => Promise<Product>;
-  updateProduct: (productData: Product) => Promise<Product>;
-  deleteProduct: (productId: number) => Promise<void>;
+// Defines the specific roles a staff member can have.
+export type StaffRole = 'Technician' | 'Inventory Associate' | 'Cashier' | 'Manager';
+
+export interface StaffMember {
+  id: number;
+  name: string;
+  role: StaffRole;
+  isAvailable: boolean; // Frontend expects a boolean
+  email: string;
+  phone: string;
+  picture?: string;
 }
+
+// Defines the structure of a purchase record, especially for display purposes.
 export interface Purchase {
   id: number;
   purchase_date: string;
   total_price: number;
-  products: string; // A comma-separated string of product names
+  products: string; // A comma-separated string of product names, as returned by our DB query.
 }
 
+
+// --- API and Global Window Definitions ---
+
+/**
+ * This is the master interface for our entire backend API.
+ * The preload script must implement this, and the frontend will use it for type-safe calls.
+ */
 export interface DBApi {
-  // ... (client and product methods)
-  createPurchase: (data: { clientId: number, items: { id: number, quantity: number }[] }) => Promise<{ id: number }>;
+  // Client Methods
+  getClients: () => Promise<Client[]>;
+  addClient: (clientData: Omit<Client, 'id' | 'picture'>) => Promise<Client>;
+  updateClient: (clientData: Client) => Promise<Client>;
+  deleteClient: (clientId: number) => Promise<void>;
+
+  // Product Methods
+  getProducts: () => Promise<Product[]>;
+  addProduct: (productData: Omit<Product, 'id'>) => Promise<Product>;
+  updateProduct: (productData: Product) => Promise<Product>;
+  deleteProduct: (productId: number) => Promise<void>;
+  
+  // Staff Methods
+  getStaff: () => Promise<StaffMember[]>;
+  addStaff: (staffData: Omit<StaffMember, 'id' | 'picture'>) => Promise<StaffMember>;
+  updateStaff: (staffData: StaffMember) => Promise<StaffMember>;
+  deleteStaff: (staffId: number) => Promise<void>;
+
+  // Purchase Methods
+  createPurchase: (data: { clientId: number; items: { id: number; quantity: number }[] }) => Promise<{ id: number }>;
   getPurchasesForClient: (clientId: number) => Promise<Purchase[]>;
 }
 
-// Extend the global Window interface to include our new 'db' property
+/**
+ * This extends the global 'Window' object type.
+ * It tells TypeScript that our renderer process window will have a property
+ * named 'db' whose shape is defined by our DBApi interface.
+ */
 declare global {
   interface Window {
     db: DBApi;
   }
-  
-    // --- ADD THE NEW PRODUCT METHODS ---
-
 }

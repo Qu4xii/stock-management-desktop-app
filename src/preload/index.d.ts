@@ -1,4 +1,4 @@
-import { GetVersionsFn } from "@shared/types";
+import { GetVersionsFn } from "../shared/types";
 
 // Type definition for the preload process
 declare global {

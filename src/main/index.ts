@@ -1,12 +1,11 @@
 // In src/main/index.ts
 
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
-import { clientsApi } from './lib/db' // <-- Import our new database API
-import { productsApi } from './lib/db'; // <-- ADD productsApi HERE
-import { purchasesApi } from './lib/db'; // <-- ADD purchasesApi
+import { app, shell, BrowserWindow, ipcMain } from 'electron';
+import { join } from 'path';
+import { electronApp, optimizer, is } from '@electron-toolkit/utils';
+import icon from '../../resources/icon.png?asset';
+import { clientsApi, productsApi, purchasesApi, staffApi } from './lib/db';
+
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 1200,
@@ -19,93 +18,75 @@ function createWindow(): void {
       sandbox: false,
       contextIsolation: true,
     },
-  })
+  });
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
+    mainWindow.show();
+  });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+    shell.openExternal(details.url);
+    return { action: 'deny' };
+  });
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
 }
 
-// --- THIS IS THE CRITICAL FIX ---
-// We are removing all old IPC handlers and adding the new ones for our database.
-
 app.whenReady().then(() => {
-
-   console.log('[DATABASE] Testing database connection...')
-  try {
-    const clients = clientsApi.getAll()
-    console.log(`[DATABASE] Success! Found ${clients.length} clients.`)
-  } catch (error) {
-    console.error('[DATABASE] Failed to connect to database:', error)
-  }
-  
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.electron');
 
   app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
+    optimizer.watchWindowShortcuts(window);
+  });
 
   // --- CLIENTS IPC API ---
-  // These are the backend listeners that our React app will call.
+  ipcMain.handle('db:clients-getAll', () => clientsApi.getAll());
+  ipcMain.handle('db:clients-add', (_event, data) => {
+    const record = clientsApi.add(data);
+    return clientsApi.getById(record.id);
+  });
+  ipcMain.handle('db:clients-update', (_event, data) => {
+    clientsApi.update(data);
+    return clientsApi.getById(data.id);
+  });
+  ipcMain.handle('db:clients-delete', (_event, id) => clientsApi.delete(id));
 
-  // READ: Handle request to get all clients
-  ipcMain.handle('db:clients-getAll', () => {
-    return clientsApi.getAll()
-  })
+  // --- PRODUCTS IPC API ---
+  ipcMain.handle('db:products-getAll', () => productsApi.getAll());
+  ipcMain.handle('db:products-add', (_event, data) => {
+    const record = productsApi.add(data);
+    return productsApi.getById(record.id);
+  });
+  ipcMain.handle('db:products-update', (_event, data) => {
+    productsApi.update(data);
+    return productsApi.getById(data.id);
+  });
+  ipcMain.handle('db:products-delete', (_event, id) => productsApi.delete(id));
   
-  // CREATE: Handle request to add a new client
-  ipcMain.handle('db:clients-add', (_event, clientData) => {
-    const newClientRecord = clientsApi.add(clientData)
-    // After adding, we get the full record to return to the frontend
-    return clientsApi.getById(newClientRecord.id)
-  })
-
-  // UPDATE: Handle request to update a client
-  ipcMain.handle('db:clients-update', (_event, clientData) => {
-    clientsApi.update(clientData)
-    // After updating, we can return the updated record
-    return clientsApi.getById(clientData.id)
-  })
-
-  // DELETE: Handle request to delete a client
-  ipcMain.handle('db:clients-delete', (_event, clientId) => {
-    clientsApi.delete(clientId)
-  })
-
-  // We will add IPC handlers for Products here later.
-ipcMain.handle('db:products-getAll', () => {
-    return productsApi.getAll();
+  // --- STAFF IPC API ---
+  ipcMain.handle('db:staff-getAll', () => staffApi.getAll());
+  ipcMain.handle('db:staff-add', (_event, data) => {
+    try {
+      const record = staffApi.add(data);
+      return staffApi.getById(record.id);
+    } catch(error: any) {
+        if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+          throw new Error(`A staff member with the email "${data.email}" already exists.`);
+        }
+        throw error;
+    }
   });
-
-  ipcMain.handle('db:products-add', (_event, productData) => {
-    const newRecord = productsApi.add(productData);
-    return productsApi.getById(newRecord.id);
+  ipcMain.handle('db:staff-update', (_event, data) => {
+    staffApi.update(data);
+    // --- THIS IS THE FIX ---
+    // Changed 'data..id' to 'data.id'
+    return staffApi.getById(data.id);
   });
-
-  ipcMain.handle('db:products-update', (_event, productData) => {
-    productsApi.update(productData);
-    return productsApi.getById(productData.id);
-  });
-
-  ipcMain.handle('db:products-delete', (_event, productId) => {
-    productsApi.delete(productId);
-  });
-  createWindow()
-
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+  ipcMain.handle('db:staff-delete', (_event, id) => staffApi.delete(id));
 
   // --- PURCHASES IPC API ---
   ipcMain.handle('db:purchases-create', (_event, { clientId, items }) => {
@@ -114,10 +95,16 @@ ipcMain.handle('db:products-getAll', () => {
   ipcMain.handle('db:purchases-getForClient', (_event, clientId) => {
     return purchasesApi.getForClient(clientId);
   });
-})
+
+  createWindow();
+
+  app.on('activate', function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit()
+    app.quit();
   }
-})
+});

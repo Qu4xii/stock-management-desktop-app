@@ -3,7 +3,7 @@
 import path from 'path'
 import { app } from 'electron'
 import Database from 'better-sqlite3'
-
+import { StaffMember } from '../../renderer/src/types';
 // --- DATABASE SETUP ---
 
 // Define the path for the database file.
@@ -69,6 +69,20 @@ const createTables = (): void => {
     );
   `;
 
+
+  const createStaffTable = `
+    CREATE TABLE IF NOT EXISTS staff (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      role TEXT NOT NULL,
+      isAvailable INTEGER NOT NULL DEFAULT 1, -- 1 for true (Available), 0 for false (Busy)
+      email TEXT UNIQUE NOT NULL,
+      phone TEXT,
+      picture TEXT
+    );
+  `;
+
+  db.exec(createStaffTable);
   db.exec(createPurchasesTable);
   db.exec(createPurchaseItemsTable);
 
@@ -162,6 +176,8 @@ export const productsApi = {
   },
 };
 
+
+
 export const purchasesApi = {
   // READ: Get all purchases for a specific client
   getForClient: (clientId: number): any[] => {
@@ -181,6 +197,7 @@ export const purchasesApi = {
     return stmt.all(clientId);
   },
 
+  
   // CREATE: A new purchase (this is the complex transaction)
   create: (clientId: number, items: { id: number; quantity: number }[]): { id: number } => {
     // Use a transaction to ensure all or no database changes are made.
@@ -224,4 +241,61 @@ export const purchasesApi = {
 
     return transaction();
   }
+
+  
+};
+
+// In src/main/lib/db.ts
+
+// ... (imports and other Api objects) ...
+
+export const staffApi = {
+  // READ: Get all staff members
+  getAll: (): StaffMember[] => {
+    const stmt = db.prepare('SELECT * FROM staff ORDER BY name ASC');
+    // We cast the raw database result to 'any[]' to bypass the strict type check for the conversion.
+    const staffMembers = stmt.all() as any[];
+
+    return staffMembers.map(member => ({
+      ...member,
+      // Now TypeScript allows the comparison because 'member' is treated as 'any'.
+      isAvailable: member.isAvailable === 1
+    }));
+  },
+
+  // CREATE: Add a new staff member
+  add: (staffData: Omit<StaffMember, 'id' | 'picture'>): { id: number } => {
+    const stmt = db.prepare(
+      'INSERT INTO staff (name, role, isAvailable, email, phone) VALUES (@name, @role, @isAvailable, @email, @phone)'
+    );
+    const info = stmt.run(staffData);
+    // FIX #2: Correct the typo from 'lastInsertRowid' to 'lastInsertRowid'
+    return { id: Number(info.lastInsertRowid) };
+  },
+  
+  // A helper to get a single staff member by ID
+  getById: (id: number): StaffMember => {
+    // Cast the raw database result to 'any' for the conversion.
+    const member = db.prepare('SELECT * FROM staff WHERE id = ?').get(id) as any;
+    
+    // Return the correctly typed StaffMember object with the boolean converted.
+    return {
+      ...member,
+      isAvailable: member.isAvailable === 1
+    };
+  },
+  
+  // UPDATE: Update an existing staff member
+  update: (staffData: StaffMember): void => {
+    const stmt = db.prepare(
+      'UPDATE staff SET name = @name, role = @role, isAvailable = @isAvailable, email = @email, phone = @phone WHERE id = @id'
+    );
+    stmt.run(staffData);
+  },
+
+  // DELETE: Remove a staff member
+  delete: (id: number): void => {
+    const stmt = db.prepare('DELETE FROM staff WHERE id = ?');
+    stmt.run(id);
+  },
 };

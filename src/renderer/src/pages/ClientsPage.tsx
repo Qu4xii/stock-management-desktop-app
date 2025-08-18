@@ -1,60 +1,97 @@
 // In src/renderer/src/pages/ClientsPage.tsx
 
-import React, { useState, useEffect, useCallback } from 'react'; // <-- Add useEffect and useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import { PlusCircle } from 'lucide-react';
+import { toast } from 'sonner';
+
+// --- COMPONENT IMPORTS ---
 import ClientsTable from '../components/ClientsTable';
 import AddClientDialog from '../components/AddClientDialog';
 import EditClientDialog from '../components/EditClientDialog';
 import ViewClientDialog from '../components/ViewClientDialog';
-import { Button } from '../components/ui/button';
-import { Client } from '../types';
 import CreatePurchaseDialog from '../components/CreatePurchaseDialog';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+
+// --- TYPE IMPORT ---
+import { Client } from '../types';
+
 function ClientsPage(): JSX.Element {
-  // The master list of clients, now loaded from the database.
+  // --- STATE MANAGEMENT ---
   const [clients, setClients] = useState<Client[]>([]);
-  // State to manage which client is being edited or viewed.
+  const [searchTerm, setSearchTerm] = useState('');
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [purchasingClient, setPurchasingClient] = useState<Client | null>(null);
 
-  // --- NEW: FUNCTION TO LOAD DATA FROM BACKEND ---
+  // --- DATA FETCHING ---
   const fetchClients = useCallback(async () => {
-    const clientsFromDb = await window.db.getClients();
-    setClients(clientsFromDb);
+    try {
+      const clientsFromDb = await window.db.getClients();
+      setClients(clientsFromDb);
+    } catch (error) {
+      console.error("Failed to fetch clients:", error);
+      toast.error("Failed to load client data from the database.");
+    }
   }, []);
 
-  // --- NEW: useEffect TO LOAD DATA ON PAGE LOAD ---
-  // This hook runs once when the component is first rendered.
   useEffect(() => {
     fetchClients();
   }, [fetchClients]);
 
-
-  // --- UPDATED HANDLER FUNCTIONS ---
+  // --- EVENT HANDLERS ---
   const handleAddClient = async (newClientData: Omit<Client, 'id' | 'picture'>) => {
-    await window.db.addClient(newClientData);
-    fetchClients(); // Refresh the list from the database
+    try {
+      const newClient = await window.db.addClient(newClientData);
+      toast.success(`Client "${newClient.name}" added successfully!`);
+      fetchClients();
+    } catch (error) {
+      console.error('Failed to add client:', error);
+      toast.error('Failed to add client. Please check the console for details.');
+    }
   };
 
   const handleUpdateClient = async (updatedClient: Client) => {
-    await window.db.updateClient(updatedClient);
-    setEditingClient(null); // Close the dialog
-    fetchClients(); // Refresh the list
+    try {
+      await window.db.updateClient(updatedClient);
+      toast.success(`Client "${updatedClient.name}" updated successfully!`);
+      setEditingClient(null);
+      fetchClients();
+    } catch (error) {
+      console.error('Failed to update client:', error);
+      toast.error('Failed to update client.');
+    }
   };
 
   const handleDeleteClient = async (clientId: number) => {
-    await window.db.deleteClient(clientId);
-    fetchClients(); // Refresh the list
+    try {
+      await window.db.deleteClient(clientId);
+      toast.success(`Client deleted successfully.`);
+      fetchClients();
+    } catch (error) {
+      console.error('Failed to delete client:', error);
+      toast.error('Failed to delete client.');
+    }
   };
 
-   const handlePurchaseCreated = () => {
-    // We could show a success toast here later
-    console.log('Purchase created!');
-    // No need to fetch clients, but we might need to refresh other data later
+  const handlePurchaseCreated = () => {
+    toast.success('New purchase recorded successfully!');
   };
 
+  // --- FILTERING LOGIC ---
+  const filteredClients = clients.filter(client => 
+    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (client.idCard && client.idCard.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (client.phone && client.phone.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // --- RENDER LOGIC ---
   return (
-    <div className="flex flex-col gap-8 h-full">
+    // This is the root div for the page. It no longer has 'h-full'.
+    <div className="flex flex-col gap-6">
+      
+      {/* Page Header Area */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Clients</h1>
@@ -67,15 +104,28 @@ function ClientsPage(): JSX.Element {
           </Button>
         </AddClientDialog>
       </div>
+
+      {/* Search Input */}
+      <div className="flex items-center">
+        <Input 
+          type="text"
+          placeholder="Search by name, email, ID, or phone..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
       
+      {/* The Table */}
       <ClientsTable 
-        clients={clients}
+        clients={filteredClients}
         onView={setViewingClient}
         onEdit={setEditingClient}
         onDelete={handleDeleteClient}
         onNewPurchase={setPurchasingClient}
       />
 
+      {/* Dialogs */}
       <EditClientDialog
         client={editingClient}
         isOpen={!!editingClient}
@@ -94,8 +144,7 @@ function ClientsPage(): JSX.Element {
         onPurchaseCreated={handlePurchaseCreated}
       />
     </div>
-    
   );
-}
+} // <-- This is the closing brace for the ClientsPage function.
 
 export default ClientsPage;
