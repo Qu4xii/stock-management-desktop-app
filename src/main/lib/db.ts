@@ -331,3 +331,31 @@ export const historyApi = {
     return db.prepare(query).all();
   }
 };
+
+// --- DASHBOARD API ---
+export const dashboardApi = {
+  getStats: (): any => {
+    // Each query uses 'as' to name the result column for easy access.
+ const totalClients = (db.prepare('SELECT COUNT(*) as count FROM clients').get() as { count: number }).count;
+    const totalStaff = (db.prepare('SELECT COUNT(*) as count FROM staff').get() as { count: number }).count;
+    
+    // For SUM queries, the result might be null, so we handle that after the type assertion.
+    const totalSales = (db.prepare('SELECT SUM(total_price) as total FROM purchases').get() as { total: number | null }).total || 0;
+    const totalRepairs = (db.prepare('SELECT COUNT(*) as count FROM repairs').get() as { count: number }).count;
+    const stockValue = (db.prepare('SELECT SUM(quantity * price) as total FROM products').get() as { total: number | null }).total || 0;
+    const outOfStockCount = (db.prepare('SELECT COUNT(*) as count FROM products WHERE quantity = 0').get() as { count: number }).count;
+    
+    // Calculate the ratio safely, avoiding division by zero.
+    const stockToSalesRatio = totalSales > 0 ? stockValue / totalSales : 0;
+
+    return {
+      totalClients,
+      totalStaff,
+      totalSales,
+      totalRepairs,
+      stockValue,
+      outOfStockCount,
+      stockToSalesRatio,
+    };
+  }
+};

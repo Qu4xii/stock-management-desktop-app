@@ -91,6 +91,9 @@ export interface DBApi {
    // --- ADD THE NEW HISTORY METHOD ---
   getHistory: () => Promise<HistoryEvent[]>;
 
+  // --- ADD THE NEW DASHBOARD METHOD ---
+  getDashboardStats: () => Promise<DashboardStats>;
+
 }
 
 export type RepairStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';
@@ -113,6 +116,16 @@ staffId: number | null;
   staffName?: string;
 }
 
+// --- 2A. DEFINE THE NEW DashboardStats INTERFACE ---
+export interface DashboardStats {
+  totalClients: number;
+  totalStaff: number;
+  totalSales: number;
+  totalRepairs: number;
+  stockValue: number;
+  outOfStockCount: number;
+  stockToSalesRatio: number;
+}
 
 
 /**

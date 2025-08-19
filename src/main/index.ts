@@ -4,8 +4,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron';
 import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import icon from '../../resources/icon.png?asset';
-import { clientsApi, productsApi, purchasesApi, staffApi ,repairsApi, historyApi } from './lib/db';
-
+import { clientsApi, productsApi, purchasesApi, staffApi ,repairsApi, historyApi, dashboardApi } from './lib/db';
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 1200,
@@ -152,6 +151,15 @@ app.whenReady().then(() => {
     }
   });
 
+// --- 3A. ADD DASHBOARD IPC API ---
+  ipcMain.handle('db:dashboard-getStats', () => {
+    try {
+      return dashboardApi.getStats();
+    } catch (error) {
+      console.error('DATABASE ERROR - Failed to get dashboard stats:', error);
+      throw error;
+    }
+  });
   createWindow();
   
   app.on('activate', function () {
