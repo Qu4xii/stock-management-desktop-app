@@ -4,7 +4,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron';
 import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import icon from '../../resources/icon.png?asset';
-import { clientsApi, productsApi, purchasesApi, staffApi ,repairsApi } from './lib/db';
+import { clientsApi, productsApi, purchasesApi, staffApi ,repairsApi, historyApi } from './lib/db';
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -143,13 +143,23 @@ app.whenReady().then(() => {
       throw error;
     }
   });
-  
+  ipcMain.handle('db:history-get', () => {
+    try {
+      return historyApi.get();
+    } catch (error) {
+      console.error('DATABASE ERROR - Failed to get combined history:', error);
+      throw error;
+    }
+  });
+
   createWindow();
   
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
+
+
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

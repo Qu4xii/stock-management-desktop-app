@@ -289,3 +289,45 @@ export const purchasesApi = {
     return transaction();
   }
 };
+
+//history api
+export const historyApi = {
+  get: (): any[] => {
+    const query = `
+      -- First, select all the relevant data from the repairs table
+      SELECT
+        'repair' as type,
+        r.id,
+        r.requestDate as eventDate,
+        c.name as clientName,
+        r.description as primaryDetail,
+        s.name as secondaryDetail, -- This will be the staff name
+        r.totalPrice
+      FROM repairs r
+      JOIN clients c ON r.clientId = c.id
+      LEFT JOIN staff s ON r.staffId = s.id
+
+      UNION ALL -- This command combines the results of the two queries
+
+      -- Second, select data from purchases, formatting it to match the columns above
+      SELECT
+        'purchase' as type,
+        p.id,
+        p.purchase_date as eventDate,
+        c.name as clientName,
+        -- We group the purchased items into a single string for the detail view
+        GROUP_CONCAT(pi.quantity_purchased || 'x ' || prod.name, '; ') as primaryDetail,
+        NULL as secondaryDetail, -- Purchases don't have a secondary detail like an assigned staff member
+        p.total_price as totalPrice
+      FROM purchases p
+      JOIN clients c ON p.client_id = c.id
+      JOIN purchase_items pi ON p.id = pi.purchase_id
+      LEFT JOIN products prod ON pi.product_id = prod.id
+      GROUP BY p.id
+
+      -- Finally, order the combined results by date, with the newest first
+      ORDER BY eventDate DESC;
+    `;
+    return db.prepare(query).all();
+  }
+};

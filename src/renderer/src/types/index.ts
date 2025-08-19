@@ -40,6 +40,17 @@ export interface Purchase {
   products: string; // A comma-separated string of product names, as returned by our DB query.
 }
 
+export type HistoryEventType = 'purchase' | 'repair';
+
+export interface HistoryEvent {
+  type: HistoryEventType;
+  id: number;
+  eventDate: string; // The date of the purchase or repair request
+  clientName: string;
+  primaryDetail: string; // The description for a repair, or the list of items for a purchase
+  secondaryDetail: string | null; // The assigned staff member for a repair
+  totalPrice: number | null;
+}
 
 // --- API and Global Window Definitions ---
 
@@ -76,6 +87,10 @@ export interface DBApi {
   addRepair: (repairData: Omit<Repair, 'id' | 'clientName' | 'staffName' | 'clientLocation'>) => Promise<Repair>;
   updateRepair: (repairData: Repair) => Promise<Repair>;
   deleteRepair: (repairId: number) => Promise<void>;
+
+   // --- ADD THE NEW HISTORY METHOD ---
+  getHistory: () => Promise<HistoryEvent[]>;
+
 }
 
 export type RepairStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';
@@ -97,6 +112,9 @@ staffId: number | null;
   clientLocation?: string;
   staffName?: string;
 }
+
+
+
 /**
  * This extends the global 'Window' object type.
  * It tells TypeScript that our renderer process window will have a property

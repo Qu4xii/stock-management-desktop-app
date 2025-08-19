@@ -49,7 +49,7 @@ const router = createHashRouter([
         element: <HistoryPage />
       },
       {
-        path: 'repairs', // <-- ADD THIS NEW ROUTE
+        path: 'repairs', // route for repairs
         element: <RepairsPage />
       },
     ]
