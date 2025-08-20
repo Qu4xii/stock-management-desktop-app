@@ -26,7 +26,8 @@ const dbApi: DBApi = {
 
   // --- STAFF METHODS (with full types) ---
   getStaff: () => ipcRenderer.invoke('db:staff-getAll'),
-  addStaff: (staffData: Omit<StaffMember, 'id' | 'picture'>) => ipcRenderer.invoke('db:staff-add', staffData),
+  addStaff: (staffData: Omit<StaffMember, 'id' | 'picture'> & { password: string }) => 
+  ipcRenderer.invoke('db:staff-add', staffData),
   updateStaff: (staffData: StaffMember) => ipcRenderer.invoke('db:staff-update', staffData),
   deleteStaff: (staffId: number) => ipcRenderer.invoke('db:staff-delete', staffId),
   

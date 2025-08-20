@@ -31,12 +31,11 @@ function StaffPage(): JSX.Element {
   }, [fetchStaff]);
 
   // Handler for adding a new staff member
- const handleAddStaff = async (newStaffData: Omit<StaffMember, 'id' | 'isAvailable' | 'picture'> & { password: string }) => {
+const handleAddStaff = async (newStaffData: Omit<StaffMember, 'id' | 'picture'> & { password: string }) => {
     try {
-      // The backend now returns the complete StaffMember object, so no need to refetch.
+      // This call is now valid because the type of newStaffData includes 'isAvailable'.
       const newMember = await window.db.addStaff(newStaffData);
       
-      // Add the new member to the local state and sort alphabetically.
       setStaff(prev => [...prev, newMember].sort((a, b) => a.name.localeCompare(b.name)));
       
       toast.success(`Staff member "${newMember.name}" added successfully!`);

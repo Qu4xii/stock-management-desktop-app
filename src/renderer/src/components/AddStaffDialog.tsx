@@ -9,7 +9,7 @@ import { StaffMember, StaffRole } from '../types';
 
 interface AddStaffDialogProps {
   children: React.ReactNode; // This will be the "+ New Technician" button
-  onStaffAdded: (staffData: Omit<StaffMember, 'id' | 'isAvailable' | 'picture'> & { password: string }) => void;
+  onStaffAdded: (staffData: Omit<StaffMember, 'id' | 'picture'> & { password: string }) => void;
 }
 
 const roles: StaffRole[] = ['Technician', 'Inventory Associate', 'Cashier', 'Manager'];

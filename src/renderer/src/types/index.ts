@@ -79,7 +79,10 @@ export interface DBApi {
   
   // Staff Methods
   getStaff: () => Promise<StaffMember[]>;
-  addStaff: (staffData: Omit<StaffMember, 'id' | 'isAvailable' | 'picture'> & { password: string }) => Promise<StaffMember>;  updateStaff: (staffData: StaffMember) => Promise<StaffMember>;
+  // The signature now correctly includes 'isAvailable' by NOT omitting it.
+  // This type now means: "all properties of StaffMember, except id and picture, plus a password."
+  addStaff: (staffData: Omit<StaffMember, 'id' | 'picture'> & { password: string }) => Promise<StaffMember>;
+  updateStaff: (staffData: StaffMember) => Promise<StaffMember>;
   deleteStaff: (staffId: number) => Promise<void>;
 
   // Purchase Methods
