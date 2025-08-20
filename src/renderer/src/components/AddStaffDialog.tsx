@@ -9,28 +9,30 @@ import { StaffMember, StaffRole } from '../types';
 
 interface AddStaffDialogProps {
   children: React.ReactNode; // This will be the "+ New Technician" button
-  onStaffAdded: (staffData: Omit<StaffMember, 'id' | 'picture'>) => void;
+  onStaffAdded: (staffData: Omit<StaffMember, 'id' | 'isAvailable' | 'picture'> & { password: string }) => void;
 }
 
 const roles: StaffRole[] = ['Technician', 'Inventory Associate', 'Cashier', 'Manager'];
 
 function AddStaffDialog({ children, onStaffAdded }: AddStaffDialogProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
-  // State for the form fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<StaffRole>('Technician');
+  const [password, setPassword] = useState('');
+  // --- 2. ADD BACK THE STATE FOR isAvailable ---
   const [isAvailable, setIsAvailable] = useState(true);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!name || !email) {
-      alert('Please provide at least a name and email address.');
+    if (!name || !email || !password) {
+      alert('Please provide a name, email, and an initial password.');
       return;
     }
 
-    onStaffAdded({ name, email, phone, role, isAvailable });
+    // --- 3. PASS isAvailable IN THE SUBMITTED DATA ---
+    onStaffAdded({ name, email, phone, role, password, isAvailable });
     
     // Close the dialog and reset the form
     setIsOpen(false);
@@ -38,6 +40,7 @@ function AddStaffDialog({ children, onStaffAdded }: AddStaffDialogProps): JSX.El
     setEmail('');
     setPhone('');
     setRole('Technician');
+    setPassword('');
     setIsAvailable(true);
   };
 
@@ -51,46 +54,28 @@ function AddStaffDialog({ children, onStaffAdded }: AddStaffDialogProps): JSX.El
             Fill in the details for the new team member.
           </DialogDescription>
         </DialogHeader>
-        {/* Using the same form layout as the Edit dialog for consistency */}
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+          <div><label>Full Name</label><Input value={name} onChange={(e) => setName(e.target.value)} required /></div>
+          <div><label>Email Address</label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+          <div><label>Phone Number</label><Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>
+          <div><label>Role</label><Select value={role} onValueChange={(value: StaffRole) => setRole(value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{roles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select></div>
+          <div><label>Initial Password</label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+
+          {/* --- 4. ADD THE AVAILABILITY DROPDOWN BACK --- */}
           <div>
-            <label htmlFor="add-staff-name">Full Name</label>
-            <Input id="add-staff-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
-          </div>
-          <div>
-            <label htmlFor="add-staff-role">Role</label>
-            <Select value={role} onValueChange={(value: StaffRole) => setRole(value)}>
-              <SelectTrigger id="add-staff-role">
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                {roles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label htmlFor="add-staff-email">Email Address</label>
-            <Input id="add-staff-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div>
-            <label htmlFor="add-staff-phone">Phone Number</label>
-            <Input id="add-staff-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </div>
-          <div className="col-span-full">
-            <label htmlFor="add-staff-availability">Availability</label>
+            <label>Availability</label>
             <Select
               value={isAvailable ? 'available' : 'busy'}
               onValueChange={(value) => setIsAvailable(value === 'available')}
             >
-              <SelectTrigger id="add-staff-availability">
-                <SelectValue placeholder="Select availability" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="available">Available</SelectItem>
                 <SelectItem value="busy">Busy</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          
           <Button type="submit" className="w-full mt-4 col-span-full">
             Add Member
           </Button>

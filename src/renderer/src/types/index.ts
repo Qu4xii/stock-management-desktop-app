@@ -79,8 +79,7 @@ export interface DBApi {
   
   // Staff Methods
   getStaff: () => Promise<StaffMember[]>;
-  addStaff: (staffData: Omit<StaffMember, 'id' | 'picture'>) => Promise<StaffMember>;
-  updateStaff: (staffData: StaffMember) => Promise<StaffMember>;
+  addStaff: (staffData: Omit<StaffMember, 'id' | 'isAvailable' | 'picture'> & { password: string }) => Promise<StaffMember>;  updateStaff: (staffData: StaffMember) => Promise<StaffMember>;
   deleteStaff: (staffId: number) => Promise<void>;
 
   // Purchase Methods
@@ -106,6 +105,9 @@ export interface DBApi {
   getDailySales: () => Promise<DailySalesPoint[]>;
   getRecentPurchases: () => Promise<RecentPurchase[]>;
   getRecentRepairs: () => Promise<Repair[]>; // We can reuse the existing Repair type
+  // --- 4. ADD NEW AUTHENTICATION METHODS ---
+  signUp: (data: Pick<StaffMember, 'name' | 'email' | 'phone'> & { password: string }) => Promise<StaffMember>;
+  logIn: (credentials: { email: string; password: string; }) => Promise<StaffMember | null>;
 
 }
 

@@ -31,17 +31,21 @@ function StaffPage(): JSX.Element {
   }, [fetchStaff]);
 
   // Handler for adding a new staff member
-  const handleAddStaff = async (newStaffData: Omit<StaffMember, 'id' | 'picture'>) => {
+ const handleAddStaff = async (newStaffData: Omit<StaffMember, 'id' | 'isAvailable' | 'picture'> & { password: string }) => {
     try {
-      const dataForBackend = { ...newStaffData, isAvailable: newStaffData.isAvailable ? 1 : 0 };
-      const newMember = await window.db.addStaff(dataForBackend as any);
+      // The backend now returns the complete StaffMember object, so no need to refetch.
+      const newMember = await window.db.addStaff(newStaffData);
+      
+      // Add the new member to the local state and sort alphabetically.
+      setStaff(prev => [...prev, newMember].sort((a, b) => a.name.localeCompare(b.name)));
+      
       toast.success(`Staff member "${newMember.name}" added successfully!`);
-      fetchStaff();
     } catch (error: any) {
       console.error('Failed to add staff member:', error);
       toast.error(error.message || 'Failed to add staff member.');
     }
   };
+
 
   // Handler for updating a staff member (used by BOTH inline edits and the full dialog)
   const handleUpdateStaff = async (updatedStaffMember: StaffMember) => {

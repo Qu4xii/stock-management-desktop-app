@@ -54,6 +54,9 @@ const dbApi: DBApi = {
   getRecentPurchases: () => ipcRenderer.invoke('db:dashboard-getRecentPurchases'),
   getRecentRepairs: () => ipcRenderer.invoke('db:dashboard-getRecentRepairs'),
   
+  // --- 6. ADD NEW AUTHENTICATION FUNCTIONS ---
+  signUp: (data) => ipcRenderer.invoke('db:auth-signUp', data),
+  logIn: (credentials) => ipcRenderer.invoke('db:auth-logIn', credentials),
 };
 
 // --- SECURELY EXPOSE THE APIS ---

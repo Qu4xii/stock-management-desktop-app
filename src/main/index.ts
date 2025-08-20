@@ -68,17 +68,18 @@ app.whenReady().then(() => {
   
   // --- STAFF IPC API ---
   ipcMain.handle('db:staff-getAll', () => staffApi.getAll());
-  ipcMain.handle('db:staff-add', (_event, data) => {
-    try {
-      const record = staffApi.add(data);
-      return staffApi.getById(record.id);
-    } catch(error: any) {
-        if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-          throw new Error(`A staff member with the email "${data.email}" already exists.`);
-        }
-        throw error;
-    }
-  });
+ ipcMain.handle('db:staff-add', async (_event, data) => {
+  // The try...catch block from the previous version is still here, now it will
+  // also catch errors from the updated 'add' function.
+  try {
+    return await staffApi.add(data);
+  } catch(error: any) {
+      if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        throw new Error(`A staff member with the email "${data.email}" already exists.`);
+      }
+      throw error;
+  }
+});
   ipcMain.handle('db:staff-update', (_event, data) => {
     staffApi.update(data);
     return staffApi.getById(data.id);
@@ -151,7 +152,7 @@ app.whenReady().then(() => {
     }
   });
 
-// --- 3A. ADD DASHBOARD IPC API ---
+  // --- DASHBOARD IPC API ---
   ipcMain.handle('db:dashboard-getStats', () => {
     try {
       return dashboardApi.getStats();
@@ -160,14 +161,78 @@ app.whenReady().then(() => {
       throw error;
     }
   });
+  
+  ipcMain.handle('db:dashboard-getWorkOrdersByStatus', () => {
+    try {
+      return dashboardApi.getWorkOrdersByStatus();
+    } catch (error) {
+      console.error('DATABASE ERROR - Failed to get work orders by status:', error);
+      throw error;
+    }
+  });
 
-// --- 3A. ADD NEW HANDLERS FOR CHARTS ---
-ipcMain.handle('db:dashboard-getWorkOrdersByStatus', () => dashboardApi.getWorkOrdersByStatus());
-ipcMain.handle('db:dashboard-getWorkOrdersByPriority', () => dashboardApi.getWorkOrdersByPriority());
-ipcMain.handle('db:dashboard-getDailySales', () => dashboardApi.getDailySales());
-// --- 3A. ADD NEW HANDLERS FOR RECENT ACTIVITY ---
-ipcMain.handle('db:dashboard-getRecentPurchases', () => dashboardApi.getRecentPurchases());
-ipcMain.handle('db:dashboard-getRecentRepairs', () => dashboardApi.getRecentRepairs());
+  ipcMain.handle('db:dashboard-getWorkOrdersByPriority', () => {
+    try {
+      return dashboardApi.getWorkOrdersByPriority();
+    } catch (error) {
+      console.error('DATABASE ERROR - Failed to get work orders by priority:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('db:dashboard-getDailySales', () => {
+    try {
+      return dashboardApi.getDailySales();
+    } catch (error) {
+      console.error('DATABASE ERROR - Failed to get daily sales:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('db:dashboard-getRecentPurchases', () => {
+    try {
+      return dashboardApi.getRecentPurchases();
+    } catch (error) {
+      console.error('DATABASE ERROR - Failed to get recent purchases:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('db:dashboard-getRecentRepairs', () => {
+    try {
+      return dashboardApi.getRecentRepairs();
+    } catch (error) {
+      console.error('DATABASE ERROR - Failed to get recent repairs:', error);
+      throw error;
+    }
+  });
+// --- AUTHENTICATION IPC API (CORRECTED) ---
+  ipcMain.handle('db:auth-signUp', async (_event, data) => {
+    // --- THIS IS THE FIX ---
+    try {
+      // Create the user in the database.
+      const record = await staffApi.signUp(data);
+      // Fetch the full, newly created user record to get all default values (like role).
+      // The getById function already correctly removes the password hash.
+      const newUser = staffApi.getById(record.id);
+      return newUser;
+    } catch (error) {
+      // Log the specific error to the terminal for debugging.
+      console.error('DATABASE ERROR - Failed to sign up:', error);
+      // Re-throw the error so the frontend can display a user-friendly message.
+      throw error;
+    }
+  });
+
+  ipcMain.handle('db:auth-logIn', async (_event, { email, password }) => {
+    try {
+      return await staffApi.authenticate(email, password);
+    } catch (error) {
+      console.error('DATABASE ERROR - Failed to log in:', error);
+      throw error;
+    }
+  });
+  
   createWindow();
   
   app.on('activate', function () {

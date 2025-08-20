@@ -2,64 +2,92 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { createHashRouter, RouterProvider } from 'react-router-dom';
-
-// --- STYLES AND GLOBAL PROVIDERS ---
-import './assets/index.css'; 
+import { createHashRouter, RouterProvider, Outlet } from 'react-router-dom';
+import './assets/index.css';
 import { ThemeProvider } from './components/ThemeProvider';
+import { AuthProvider } from './context/AuthContext'; // Correctly import AuthProvider
 
-// --- ROOT APP AND PAGE COMPONENT IMPORTS ---
-import App from './App'; 
+// Import all pages and components
+import App from './App';
+import ProtectedRoute from './components/ProtectedRoute';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import ClientsPage from './pages/ClientsPage';
-import ProductsPage from './pages/ProductsPage'; 
+import ProductsPage from './pages/ProductsPage';
 import StaffPage from './pages/StaffPage';
 import HistoryPage from './pages/HistoryPage';
 import RepairsPage from './pages/RepairsPage';
 
-/**
- * This is the router configuration for your application.
- * All routes are defined in this single structure.
- */
+// --- THIS IS THE FIX ---
+// 1. Create a Root component that provides the context.
+//    The <Outlet /> will render the matched child route (e.g., LoginPage or ProtectedRoute).
+const Root = () => {
+  return (
+    <AuthProvider>
+      <Outlet />
+    </AuthProvider>
+  );
+};
+
+// 2. Restructure the router.
 const router = createHashRouter([
   {
-    // --- THIS IS THE SINGLE, CORRECT ROOT ROUTE ---
     path: '/',
-    element: <App />,
-    // All pages are children of the root layout
+    element: <Root />, // The Root component is now the entry point.
     children: [
+      // Public routes are now direct children
       {
-        index: true, // Default page
-        element: <DashboardPage />
-      },
-      {
-        path: 'clients',
-        element: <ClientsPage />
+        path: 'login',
+        element: <LoginPage />,
       },
       {
-        path: 'products',
-        element: <ProductsPage />
+        path: 'signup',
+        element: <SignupPage />,
       },
+      // The ProtectedRoute now correctly sits inside the AuthProvider's context.
       {
-        path: 'staff',
-        element: <StaffPage />
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <App />, // Your main layout with sidebar
+            children: [
+              // All your protected pages
+              {
+                index: true, // This makes Dashboard the default for "/"
+                element: <DashboardPage />,
+              },
+              {
+                path: 'clients',
+                element: <ClientsPage />,
+              },
+              {
+                path: 'products',
+                element: <ProductsPage />,
+              },
+              {
+                path: 'staff',
+                element: <StaffPage />,
+              },
+              {
+                path: 'history',
+                element: <HistoryPage />,
+              },
+              {
+                path: 'repairs',
+                element: <RepairsPage />,
+              },
+            ],
+          },
+        ],
       },
-      { 
-        path: 'history', 
-        element: <HistoryPage />
-      },
-      {
-        path: 'repairs', // route for repairs
-        element: <RepairsPage />
-      },
-    ]
-  }
+    ],
+  },
 ]);
-/**
- * This is the main entry point of your React application.
- */
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
+    {/* ThemeProvider can remain the outermost provider */}
     <ThemeProvider defaultTheme="dark" storageKey="vite-react-electron-theme">
       <RouterProvider router={router} />
     </ThemeProvider>
