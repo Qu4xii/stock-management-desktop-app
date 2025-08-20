@@ -39,7 +39,13 @@ export interface Purchase {
   total_price: number;
   products: string; // A comma-separated string of product names, as returned by our DB query.
 }
-
+export interface RecentPurchase {
+  id: number;
+  purchase_date: string;
+  total_price: number;
+  clientName: string; // This is the key field that was missing from the base Purchase type
+  products: string;
+}
 export type HistoryEventType = 'purchase' | 'repair';
 
 export interface HistoryEvent {
@@ -94,6 +100,13 @@ export interface DBApi {
   // --- ADD THE NEW DASHBOARD METHOD ---
   getDashboardStats: () => Promise<DashboardStats>;
 
+//chart methods
+  getWorkOrdersByStatus: () => Promise<ChartDataPoint[]>;
+  getWorkOrdersByPriority: () => Promise<ChartDataPoint[]>;
+  getDailySales: () => Promise<DailySalesPoint[]>;
+  getRecentPurchases: () => Promise<RecentPurchase[]>;
+  getRecentRepairs: () => Promise<Repair[]>; // We can reuse the existing Repair type
+
 }
 
 export type RepairStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';
@@ -127,6 +140,16 @@ export interface DashboardStats {
   stockToSalesRatio: number;
 }
 
+// --- 2A. DEFINE NEW TYPES FOR CHART DATA ---
+export interface ChartDataPoint {
+  name: string; // e.g., 'Completed', 'High'
+  value: number; // The count
+}
+
+export interface DailySalesPoint {
+  date: string; // e.g., '2024-08-20'
+  totalSales: number;
+}
 
 /**
  * This extends the global 'Window' object type.

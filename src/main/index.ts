@@ -160,6 +160,14 @@ app.whenReady().then(() => {
       throw error;
     }
   });
+
+// --- 3A. ADD NEW HANDLERS FOR CHARTS ---
+ipcMain.handle('db:dashboard-getWorkOrdersByStatus', () => dashboardApi.getWorkOrdersByStatus());
+ipcMain.handle('db:dashboard-getWorkOrdersByPriority', () => dashboardApi.getWorkOrdersByPriority());
+ipcMain.handle('db:dashboard-getDailySales', () => dashboardApi.getDailySales());
+// --- 3A. ADD NEW HANDLERS FOR RECENT ACTIVITY ---
+ipcMain.handle('db:dashboard-getRecentPurchases', () => dashboardApi.getRecentPurchases());
+ipcMain.handle('db:dashboard-getRecentRepairs', () => dashboardApi.getRecentRepairs());
   createWindow();
   
   app.on('activate', function () {

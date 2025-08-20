@@ -357,5 +357,78 @@ export const dashboardApi = {
       outOfStockCount,
       stockToSalesRatio,
     };
+  },
+
+  // Gets the count of work orders for each status.
+  getWorkOrdersByStatus: (): any[] => {
+    const query = `
+      SELECT status as name, COUNT(*) as value
+      FROM repairs
+      GROUP BY status;
+    `;
+    return db.prepare(query).all();
+  },
+
+  // Gets the count of work orders for each priority.
+  getWorkOrdersByPriority: (): any[] => {
+    const query = `
+      SELECT priority as name, COUNT(*) as value
+      FROM repairs
+      GROUP BY priority;
+    `;
+    return db.prepare(query).all();
+  },
+
+  // Gets the total sales amount for each of the last 7 days.
+  getDailySales: (): any[] => {
+    const query = `
+      SELECT
+        -- Extracts the date part (YYYY-MM-DD) from the full ISO string
+        SUBSTR(purchase_date, 1, 10) as date,
+        SUM(total_price) as totalSales
+      FROM purchases
+      -- Filters for records from the last 7 days
+      WHERE purchase_date >= date('now', '-7 days')
+      GROUP BY date
+      ORDER BY date ASC;
+    `;
+    return db.prepare(query).all();
+  },
+
+  getRecentPurchases: (): any[] => {
+    const query = `
+      SELECT
+        p.id,
+        p.purchase_date,
+        p.total_price,
+        c.name as clientName,
+        GROUP_CONCAT(pi.quantity_purchased || 'x ' || prod.name, '; ') as products
+      FROM purchases p
+      JOIN clients c ON p.client_id = c.id
+      JOIN purchase_items pi ON p.id = pi.purchase_id
+      LEFT JOIN products prod ON pi.product_id = prod.id
+      GROUP BY p.id
+      ORDER BY p.purchase_date DESC
+      LIMIT 5;
+    `;
+    return db.prepare(query).all();
+  },
+
+  // Gets the 5 most recent repairs with client and staff names.
+  getRecentRepairs: (): any[] => {
+    const query = `
+      SELECT
+        r.id,
+        r.requestDate,
+        r.status,
+        r.description,
+        c.name AS clientName
+      FROM repairs r
+      JOIN clients c ON r.clientId = c.id
+      ORDER BY r.requestDate DESC
+      LIMIT 5;
+    `;
+    return db.prepare(query).all();
   }
+
 };

@@ -45,6 +45,15 @@ const dbApi: DBApi = {
   getRepairsForClient: (clientId: number) => ipcRenderer.invoke('db:repairs-getForClient', clientId),
   getHistory: () => ipcRenderer.invoke('db:history-get'),
   getDashboardStats: () => ipcRenderer.invoke('db:dashboard-getStats'),
+
+  // --- 3B. ADD NEW FUNCTIONS FOR CHARTS ---
+  getWorkOrdersByStatus: () => ipcRenderer.invoke('db:dashboard-getWorkOrdersByStatus'),
+  getWorkOrdersByPriority: () => ipcRenderer.invoke('db:dashboard-getWorkOrdersByPriority'),
+  getDailySales: () => ipcRenderer.invoke('db:dashboard-getDailySales'),
+
+  getRecentPurchases: () => ipcRenderer.invoke('db:dashboard-getRecentPurchases'),
+  getRecentRepairs: () => ipcRenderer.invoke('db:dashboard-getRecentRepairs'),
+  
 };
 
 // --- SECURELY EXPOSE THE APIS ---
