@@ -58,6 +58,8 @@ const dbApi: DBApi = {
   // --- 6. ADD NEW AUTHENTICATION FUNCTIONS ---
   signUp: (data) => ipcRenderer.invoke('db:auth-signUp', data),
   logIn: (credentials) => ipcRenderer.invoke('db:auth-logIn', credentials),
+   // --- 3C. ADD THE NEW EXPORT FUNCTION ---
+  generateClientReport: (options) => ipcRenderer.invoke('db:export-clientReport', options),
 };
 
 // --- SECURELY EXPOSE THE APIS ---

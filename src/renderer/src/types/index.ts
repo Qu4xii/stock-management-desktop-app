@@ -111,6 +111,8 @@ export interface DBApi {
   // --- 4. ADD NEW AUTHENTICATION METHODS ---
   signUp: (data: Pick<StaffMember, 'name' | 'email' | 'phone'> & { password: string }) => Promise<StaffMember>;
   logIn: (credentials: { email: string; password: string; }) => Promise<StaffMember | null>;
+  //export methods
+  generateClientReport: (options: ExportOptions) => Promise<{ success: boolean; message?: string }>;
 
 }
 
@@ -155,7 +157,15 @@ export interface DailySalesPoint {
   date: string; // e.g., '2024-08-20'
   totalSales: number;
 }
-
+// --- 2A. DEFINE TYPES FOR THE EXPORT FUNCTION ---
+export type ExportType = 'purchases' | 'repairs' | 'all';
+export interface ExportOptions {
+  clientId: number;
+  clientName: string;
+  type: ExportType;
+  purchaseIds?: number[];
+  repairIds?: number[];
+}
 /**
  * This extends the global 'Window' object type.
  * It tells TypeScript that our renderer process window will have a property

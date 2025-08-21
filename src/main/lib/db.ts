@@ -511,3 +511,34 @@ export const dashboardApi = {
   }
 
 };
+// Export API for external usage
+export const exportApi = {
+  // This function gets specific purchase records by their IDs for a given client.
+  getPurchasesByIds: (clientId: number, purchaseIds: number[]): any[] => {
+    if (purchaseIds.length === 0) return [];
+    const placeholders = purchaseIds.map(() => '?').join(',');
+    const query = `
+      SELECT p.purchase_date, p.total_price, GROUP_CONCAT(pi.quantity_purchased || 'x ' || prod.name, '\n') as products
+      FROM purchases p
+      JOIN purchase_items pi ON p.id = pi.purchase_id
+      LEFT JOIN products prod ON pi.product_id = prod.id
+      WHERE p.client_id = ? AND p.id IN (${placeholders})
+      GROUP BY p.id
+      ORDER BY p.purchase_date DESC;
+    `;
+    return db.prepare(query).all(clientId, ...purchaseIds);
+  },
+
+  // This function gets specific repair records by their IDs for a given client.
+  getRepairsByIds: (clientId: number, repairIds: number[]): any[] => {
+    if (repairIds.length === 0) return [];
+    const placeholders = repairIds.map(() => '?').join(',');
+    const query = `
+      SELECT requestDate, description, status, totalPrice
+      FROM repairs
+      WHERE clientId = ? AND id IN (${placeholders})
+      ORDER BY requestDate DESC;
+    `;
+    return db.prepare(query).all(clientId, ...repairIds);
+  }
+};
