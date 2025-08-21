@@ -18,6 +18,7 @@ import ProductsPage from './pages/ProductsPage';
 import StaffPage from './pages/StaffPage';
 import HistoryPage from './pages/HistoryPage';
 import RepairsPage from './pages/RepairsPage';
+import ProfilePage from './pages/ProfilePage';
 
 // --- THIS IS THE FIX ---
 // 1. Create a Root component that provides the context.
@@ -76,6 +77,10 @@ const router = createHashRouter([
               {
                 path: 'repairs',
                 element: <RepairsPage />,
+              },
+              {
+                path: 'profile',
+                element: <ProfilePage />,
               },
             ],
           },

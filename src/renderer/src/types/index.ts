@@ -79,11 +79,15 @@ export interface DBApi {
   
   // Staff Methods
   getStaff: () => Promise<StaffMember[]>;
-  // The signature now correctly includes 'isAvailable' by NOT omitting it.
-  // This type now means: "all properties of StaffMember, except id and picture, plus a password."
   addStaff: (staffData: Omit<StaffMember, 'id' | 'picture'> & { password: string }) => Promise<StaffMember>;
   updateStaff: (staffData: StaffMember) => Promise<StaffMember>;
   deleteStaff: (staffId: number) => Promise<void>;
+
+  // --- THIS IS THE FIX ---
+  // Add the new profile and password methods
+  updateProfile: (data: { id: number; name: string; email: string; phone: string | null }) => Promise<StaffMember>;
+  changePassword: (data: { id: number; oldPassword: string; newPassword: string }) => Promise<{ success: boolean }>;
+
 
   // Purchase Methods
   createPurchase: (data: { clientId: number; items: { id: number; quantity: number }[] }) => Promise<{ id: number }>;
@@ -96,22 +100,22 @@ export interface DBApi {
   updateRepair: (repairData: Repair) => Promise<Repair>;
   deleteRepair: (repairId: number) => Promise<void>;
 
-   // --- ADD THE NEW HISTORY METHOD ---
+   // History Method
   getHistory: () => Promise<HistoryEvent[]>;
 
-  // --- ADD THE NEW DASHBOARD METHOD ---
+  // Dashboard Methods
   getDashboardStats: () => Promise<DashboardStats>;
-
-//chart methods
   getWorkOrdersByStatus: () => Promise<ChartDataPoint[]>;
   getWorkOrdersByPriority: () => Promise<ChartDataPoint[]>;
   getDailySales: () => Promise<DailySalesPoint[]>;
   getRecentPurchases: () => Promise<RecentPurchase[]>;
-  getRecentRepairs: () => Promise<Repair[]>; // We can reuse the existing Repair type
-  // --- 4. ADD NEW AUTHENTICATION METHODS ---
+  getRecentRepairs: () => Promise<Repair[]>; 
+  
+  // Authentication Methods
   signUp: (data: Pick<StaffMember, 'name' | 'email' | 'phone'> & { password: string }) => Promise<StaffMember>;
   logIn: (credentials: { email: string; password: string; }) => Promise<StaffMember | null>;
-  //export methods
+  
+  // Export Methods
   generateClientReport: (options: ExportOptions) => Promise<{ success: boolean; message?: string }>;
 
 }
@@ -129,14 +133,14 @@ export interface Repair {
   totalPrice?: number
   // These are foreign keys that link to other tables
   clientId: number;
-staffId: number | null;
+  staffId: number | null;
   // These fields will be 'joined' in our database query for display purposes
   clientName?: string;
   clientLocation?: string;
   staffName?: string;
 }
 
-// --- 2A. DEFINE THE NEW DashboardStats INTERFACE ---
+// --- Dashboard and Chart Types ---
 export interface DashboardStats {
   totalClients: number;
   totalStaff: number;
@@ -147,7 +151,6 @@ export interface DashboardStats {
   stockToSalesRatio: number;
 }
 
-// --- 2A. DEFINE NEW TYPES FOR CHART DATA ---
 export interface ChartDataPoint {
   name: string; // e.g., 'Completed', 'High'
   value: number; // The count
@@ -157,7 +160,8 @@ export interface DailySalesPoint {
   date: string; // e.g., '2024-08-20'
   totalSales: number;
 }
-// --- 2A. DEFINE TYPES FOR THE EXPORT FUNCTION ---
+
+// --- Export Function Types ---
 export type ExportType = 'purchases' | 'repairs' | 'all';
 export interface ExportOptions {
   clientId: number;
@@ -166,11 +170,8 @@ export interface ExportOptions {
   purchaseIds?: number[];
   repairIds?: number[];
 }
-/**
- * This extends the global 'Window' object type.
- * It tells TypeScript that our renderer process window will have a property
- * named 'db' whose shape is defined by our DBApi interface.
- */
+
+// --- Global Window Declaration ---
 declare global {
   interface Window {
     db: DBApi;
