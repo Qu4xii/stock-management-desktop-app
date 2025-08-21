@@ -8,9 +8,7 @@ import fs from 'fs';
 import { clientsApi, productsApi, purchasesApi, staffApi, repairsApi, historyApi, dashboardApi, exportApi} from './lib/db';
 import path from "path";
 
-/**
- * Register all IPC handlers
- */
+
 function registerIpcHandlers(): void {
   // =========================
   // CLIENTS IPC HANDLERS
@@ -119,15 +117,6 @@ function registerIpcHandlers(): void {
     }
   });
 
-  ipcMain.handle('db:staff-update', async (_event, data) => {
-    try {
-      await staffApi.update(data);
-      return await staffApi.getById(data.id);
-    } catch (error) {
-      console.error('DATABASE ERROR - Failed to update staff:', error);
-      throw error;
-    }
-  });
 
   ipcMain.handle('db:staff-delete', async (_event, id) => {
     try {
@@ -313,7 +302,55 @@ function registerIpcHandlers(): void {
       throw error;
     }
   });
+// =========================
+// PROFILE MANAGEMENT IPC HANDLERS
+// =========================
+ipcMain.handle('db:staff-updateProfile', async (_event, data) => {
+  try {
+    console.log('🔐 Processing profile update for user ID:', data.id);
+    
+    await staffApi.updateProfile(data);
+    
+    const updatedUser = await staffApi.getById(data.id);
+    if (!updatedUser) {
+      throw new Error('Failed to retrieve updated user profile');
+    }
+    console.log('✅ Profile update successful for user:', updatedUser.email);
+    return updatedUser;
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Profile update failed';
+    console.error('❌ DATABASE ERROR - Failed to update profile:', error);
+    throw new Error(errorMessage);
+  }
+});
 
+ipcMain.handle('db:staff-changePassword', async (_event, { id, oldPassword, newPassword }) => {
+  try {
+    console.log('🔐 Processing password change for user ID:', id);
+    
+    // First, get the current user to verify old password
+    const user = await staffApi.getById(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Verify the old password
+    const isOldPasswordValid = await staffApi.verifyPassword(user.email, oldPassword);
+    if (!isOldPasswordValid) {
+      throw new Error('Current password is incorrect');
+    }
+
+    // Update the password
+    await staffApi.updatePassword(id, newPassword);
+    
+    console.log('✅ Password change successful for user:', user.email);
+    return { success: true, message: 'Password updated successfully' };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Password change failed';
+    console.error('❌ DATABASE ERROR - Failed to change password:', error);
+    throw new Error(errorMessage);
+  }
+});
   // =========================
   // EXPORT CLIENT REPORT HANDLER
   // =========================

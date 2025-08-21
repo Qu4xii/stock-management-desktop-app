@@ -1,3 +1,4 @@
+// src/renderer/src/context/AuthContext.tsx
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { StaffMember } from '../types';
 
@@ -7,6 +8,7 @@ interface AuthContextType {
   logIn: (credentials: { email: string; password: string }) => Promise<void>;
   signUp: (data: Pick<StaffMember, 'name' | 'email' | 'phone'> & { password: string }) => Promise<void>;
   logOut: () => void;
+  updateCurrentUser: (user: StaffMember) => void; // Added this method
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,8 +45,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null);
   };
 
+  // New method to update current user after profile changes
+  const updateCurrentUser = (user: StaffMember) => {
+    setCurrentUser(user);
+  };
+
   return (
-    <AuthContext.Provider value={{ currentUser, isLoading, logIn, signUp, logOut }}>
+    <AuthContext.Provider value={{ 
+      currentUser, 
+      isLoading, 
+      logIn, 
+      signUp, 
+      logOut, 
+      updateCurrentUser 
+    }}>
       {children}
     </AuthContext.Provider>
   );

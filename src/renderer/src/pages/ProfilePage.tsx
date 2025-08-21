@@ -1,5 +1,5 @@
-// In src/renderer/src/pages/ProfilePage.tsx
-// (This is a large component, but it's complete)
+// src/renderer/src/pages/ProfilePage.tsx
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Label } from '../components/ui/label';
@@ -28,15 +28,18 @@ const passwordSchema = z
     path: ['confirmPassword']
   });
 
+type ProfileFormData = z.infer<typeof profileSchema>;
+type PasswordFormData = z.infer<typeof passwordSchema>;
+
 export default function ProfilePage() {
-  const { currentUser } = useAuth();
+  const { currentUser, updateCurrentUser } = useAuth(); // Now updateCurrentUser exists
 
   // --- Profile Form Logic ---
   const {
     register: registerProfile,
     handleSubmit: handleProfileSubmit,
     formState: { errors: profileErrors, isSubmitting: isProfileSubmitting }
-  } = useForm({
+  } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: currentUser?.name || '',
@@ -45,15 +48,28 @@ export default function ProfilePage() {
     }
   });
 
-  const onProfileSubmit = async (data) => {
+  const onProfileSubmit = async (data: ProfileFormData) => {
     if (!currentUser) return;
+    
     try {
       toast.info('Updating profile...');
-      await window.db.updateProfile({ id: currentUser.id, ...data });
+      
+      // Convert empty string to null for phone to match database expectations
+      const profileData = {
+        id: currentUser.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone || null // Convert empty string or undefined to null
+      };
+      
+      const updatedUser = await window.db.updateProfile(profileData);
+      
+      // Update the user in the auth context
+      updateCurrentUser(updatedUser);
+      
       toast.success('Profile updated successfully!');
-      // Note: You may need to update the currentUser in your AuthContext
-      // to see changes immediately without a refresh.
     } catch (error: any) {
+      console.error('Profile update error:', error);
       toast.error(`Failed to update profile: ${error.message}`);
     }
   };
@@ -64,33 +80,42 @@ export default function ProfilePage() {
     handleSubmit: handlePasswordSubmit,
     reset: resetPasswordForm,
     formState: { errors: passwordErrors, isSubmitting: isPasswordSubmitting }
-  } = useForm({
+  } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema)
   });
 
-  const onPasswordSubmit = async (data) => {
+  const onPasswordSubmit = async (data: PasswordFormData) => {
     if (!currentUser) return;
+    
     try {
       toast.info('Changing password...');
+      
       await window.db.changePassword({
         id: currentUser.id,
         oldPassword: data.oldPassword,
         newPassword: data.newPassword
       });
+      
       toast.success('Password changed successfully!');
       resetPasswordForm();
     } catch (error: any) {
+      console.error('Password change error:', error);
       toast.error(`Failed to change password: ${error.message}`);
     }
   };
 
   if (!currentUser) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading profile...</div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">My Profile</h1>
+      
       <div className="grid gap-6 md:grid-cols-2">
         {/* Profile Details Card */}
         <Card>
@@ -102,19 +127,42 @@ export default function ProfilePage() {
             <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" {...registerProfile('name')} />
-                {profileErrors.name && <p className="text-sm text-destructive">{profileErrors.name.message}</p>}
+                <Input 
+                  id="name" 
+                  {...registerProfile('name')} 
+                  disabled={isProfileSubmitting}
+                />
+                {profileErrors.name && (
+                  <p className="text-sm text-destructive">{profileErrors.name.message}</p>
+                )}
               </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" {...registerProfile('email')} />
-                {profileErrors.email && <p className="text-sm text-destructive">{profileErrors.email.message}</p>}
+                <Input 
+                  id="email" 
+                  type="email" 
+                  {...registerProfile('email')} 
+                  disabled={isProfileSubmitting}
+                />
+                {profileErrors.email && (
+                  <p className="text-sm text-destructive">{profileErrors.email.message}</p>
+                )}
               </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" {...registerProfile('phone')} />
-                {profileErrors.phone && <p className="text-sm text-destructive">{profileErrors.phone.message}</p>}
+                <Input 
+                  id="phone" 
+                  {...registerProfile('phone')} 
+                  disabled={isProfileSubmitting}
+                  placeholder="Optional"
+                />
+                {profileErrors.phone && (
+                  <p className="text-sm text-destructive">{profileErrors.phone.message}</p>
+                )}
               </div>
+              
               <Button type="submit" disabled={isProfileSubmitting}>
                 {isProfileSubmitting ? 'Saving...' : 'Save Changes'}
               </Button>
@@ -132,19 +180,43 @@ export default function ProfilePage() {
             <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="oldPassword">Current Password</Label>
-                <Input id="oldPassword" type="password" {...registerPassword('oldPassword')} />
-                {passwordErrors.oldPassword && <p className="text-sm text-destructive">{passwordErrors.oldPassword.message}</p>}
+                <Input 
+                  id="oldPassword" 
+                  type="password" 
+                  {...registerPassword('oldPassword')} 
+                  disabled={isPasswordSubmitting}
+                />
+                {passwordErrors.oldPassword && (
+                  <p className="text-sm text-destructive">{passwordErrors.oldPassword.message}</p>
+                )}
               </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input id="newPassword" type="password" {...registerPassword('newPassword')} />
-                {passwordErrors.newPassword && <p className="text-sm text-destructive">{passwordErrors.newPassword.message}</p>}
+                <Input 
+                  id="newPassword" 
+                  type="password" 
+                  {...registerPassword('newPassword')} 
+                  disabled={isPasswordSubmitting}
+                />
+                {passwordErrors.newPassword && (
+                  <p className="text-sm text-destructive">{passwordErrors.newPassword.message}</p>
+                )}
               </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input id="confirmPassword" type="password" {...registerPassword('confirmPassword')} />
-                {passwordErrors.confirmPassword && <p className="text-sm text-destructive">{passwordErrors.confirmPassword.message}</p>}
+                <Input 
+                  id="confirmPassword" 
+                  type="password" 
+                  {...registerPassword('confirmPassword')} 
+                  disabled={isPasswordSubmitting}
+                />
+                {passwordErrors.confirmPassword && (
+                  <p className="text-sm text-destructive">{passwordErrors.confirmPassword.message}</p>
+                )}
               </div>
+              
               <Button type="submit" variant="secondary" disabled={isPasswordSubmitting}>
                 {isPasswordSubmitting ? 'Updating...' : 'Update Password'}
               </Button>

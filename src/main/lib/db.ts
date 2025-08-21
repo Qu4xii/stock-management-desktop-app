@@ -148,7 +148,7 @@ export const productsApi = {
   },
 };
 
-// --- STAFF API ---
+// --- STAFF API (FIXED) ---
 export const staffApi = {
   getAll: (): StaffMember[] => {
     const staffMembers = db.prepare('SELECT * FROM staff ORDER BY name ASC').all() as any[];
@@ -156,28 +156,23 @@ export const staffApi = {
   },
   
   // This add function is for creating staff from the Staff page, not for signup.
-  // It should be removed if you only want staff created via signup.
- // --- THIS IS THE FIX ---
-  // We are rewriting the 'add' function to be secure.
   add: async (staffData: Omit<StaffMember, 'id' | 'picture'> & { password: string }): Promise<StaffMember> => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(staffData.password, saltRounds);
 
-
-  const stmt = db.prepare(
+    const stmt = db.prepare(
       `INSERT INTO staff (name, role, isAvailable, email, phone, password) 
       VALUES (@name, @role, @isAvailable, @email, @phone, @password)`
     );
     
     try {
-      // We convert the incoming boolean to a number (1 or 0) for SQLite before running the query.
+      // Convert boolean to number (1 or 0) for SQLite
       const info = stmt.run({ 
         ...staffData, 
         password: hashedPassword,
         isAvailable: staffData.isAvailable ? 1 : 0 
       });
 
-      // After creating the user, fetch the full record to return to the frontend.
       return staffApi.getById(Number(info.lastInsertRowid));
     } catch (error: any) {
       if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -189,12 +184,41 @@ export const staffApi = {
   
   getById: (id: number): StaffMember => {
     const member = db.prepare('SELECT * FROM staff WHERE id = ?').get(id) as any;
-    // We must convert the number to a boolean to match the StaffMember type.
+    if (!member) {
+      throw new Error('Staff member not found');
+    }
+    // Convert number to boolean to match StaffMember type
     return { ...member, isAvailable: member.isAvailable === 1 };
   },
-  
+
+  // NEW: Update profile information (without password)
+  updateProfile: async (data: Pick<StaffMember, 'id' | 'name' | 'email' | 'phone'>): Promise<void> => {
+    const stmt = db.prepare(
+      'UPDATE staff SET name = @name, email = @email, phone = @phone WHERE id = @id'
+    );
+    
+    try {
+      const result = stmt.run(data);
+      if (result.changes === 0) {
+        throw new Error('Staff member not found or no changes made');
+      }
+    } catch (error: any) {
+      if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        throw new Error('A staff member with this email already exists.');
+      }
+      throw error;
+    }
+  },
+
+  // NEW: Update full staff member (for admin use)
   update: (staffData: StaffMember): void => {
-    db.prepare('UPDATE staff SET name = @name, role = @role, isAvailable = @isAvailable, email = @email, phone = @phone WHERE id = @id').run({ ...staffData, isAvailable: staffData.isAvailable ? 1 : 0 });
+    const stmt = db.prepare(
+      'UPDATE staff SET name = @name, role = @role, isAvailable = @isAvailable, email = @email, phone = @phone WHERE id = @id'
+    );
+    stmt.run({ 
+      ...staffData, 
+      isAvailable: staffData.isAvailable ? 1 : 0 
+    });
   },
   
   delete: (id: number): void => {
@@ -206,7 +230,7 @@ export const staffApi = {
     const hashedPassword = await bcrypt.hash(data.password, saltRounds);
     const stmt = db.prepare(
       `INSERT INTO staff (name, email, phone, password, role, isAvailable) 
-       VALUES (@name, @email, @phone, @password, 'Technician', 1)`
+      VALUES (@name, @email, @phone, @password, 'Technician', 1)`
     );
     try {
       const info = stmt.run({ ...data, password: hashedPassword });
@@ -221,29 +245,49 @@ export const staffApi = {
 
   authenticate: async (email: string, password: string): Promise<StaffMember | null> => {
     const stmt = db.prepare('SELECT * FROM staff WHERE email = ?');
-    // Fetch the raw user data, including the password and the numeric isAvailable.
     const user = stmt.get(email) as any;
 
     if (!user || !user.password) {
-      return null; // User not found
+      return null;
     }
 
     const match = await bcrypt.compare(password, user.password);
 
     if (match) {
-      // --- THIS IS THE FIX ---
-      // 1. Destructure the password out of the object.
+      // Remove password from returned object and convert isAvailable to boolean
       const { password: _, ...userWithoutPassword } = user;
-      // 2. Return a new object that spreads the user data AND explicitly sets
-      //    isAvailable to the correct boolean type. This overwrites the old
-      //    numeric value and satisfies TypeScript.
       return { 
         ...userWithoutPassword, 
         isAvailable: user.isAvailable === 1 
       };
     }
 
-    return null; // Passwords do not match
+    return null;
+  },
+
+  // NEW: Verify password for password change
+  verifyPassword: async (email: string, password: string): Promise<boolean> => {
+    const stmt = db.prepare('SELECT password FROM staff WHERE email = ?');
+    const user = stmt.get(email) as any;
+
+    if (!user || !user.password) {
+      return false;
+    }
+
+    return await bcrypt.compare(password, user.password);
+  },
+
+  // NEW: Update password
+  updatePassword: async (id: number, newPassword: string): Promise<void> => {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    
+    const stmt = db.prepare('UPDATE staff SET password = ? WHERE id = ?');
+    const result = stmt.run(hashedPassword, id);
+    
+    if (result.changes === 0) {
+      throw new Error('Staff member not found');
+    }
   },
 };
 
@@ -542,3 +586,4 @@ export const exportApi = {
     return db.prepare(query).all(clientId, ...repairIds);
   }
 };
+
