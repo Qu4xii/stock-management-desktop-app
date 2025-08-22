@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
+import { Label } from './ui/label'; // Import Label component
 import { Client, StaffMember, Repair, RepairStatus, RepairPriority } from '../types';
 
 interface AddRepairDialogProps {
@@ -79,66 +80,107 @@ function AddRepairDialog({ children, onRepairAdded }: AddRepairDialogProps): JSX
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[800px] bg-white dark:bg-slate-900">
+      {/* Remove hardcoded background - let ShadCN theming handle it */}
+      <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Create New Work Order</DialogTitle>
           <DialogDescription>
             Fill in the details for the new repair job.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+        {/* Use proper Label components with consistent spacing */}
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
           
-          <div className="md:col-span-2">
-            <label>Description</label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required />
+          <div className="md:col-span-2 grid w-full items-center gap-1.5">
+            <Label htmlFor="repair-description">Description</Label>
+            <Textarea 
+              id="repair-description"
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+              required 
+            />
           </div>
           
-          <div>
-            <label>Status</label>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="repair-status">Status</Label>
             <Select value={status} onValueChange={(v: RepairStatus) => setStatus(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              <SelectTrigger id="repair-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statuses.map(s => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
-          <div>
-            <label>Priority</label>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="repair-priority">Priority</Label>
             <Select value={priority} onValueChange={(v: RepairPriority) => setPriority(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+              <SelectTrigger id="repair-priority">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {priorities.map(p => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
-          <div>
-            <label>Assign to Client</label>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="repair-client">Assign to Client</Label>
             <Select value={clientId ? String(clientId) : ""} onValueChange={(v) => setClientId(Number(v))}>
-              <SelectTrigger><SelectValue placeholder="Select a client..." /></SelectTrigger>
-              <SelectContent>{clients.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+              <SelectTrigger id="repair-client">
+                <SelectValue placeholder="Select a client..." />
+              </SelectTrigger>
+              <SelectContent>
+                {clients.map(c => (
+                  <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
-          <div>
-            <label>Assign to Technician</label>
-            <Select value={staffId ? String(staffId) : ""} onValueChange={(v) => setStaffId(Number(v))}>
-              <SelectTrigger><SelectValue placeholder="Select a technician..." /></SelectTrigger>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="repair-technician">Assign to Technician</Label>
+            <Select value={staffId ? String(staffId) : "0"} onValueChange={(v) => setStaffId(Number(v) || undefined)}>
+              <SelectTrigger id="repair-technician">
+                <SelectValue placeholder="Select a technician..." />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="0">Unassigned</SelectItem>
-                {staff.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
+                {staff.map(s => (
+                  <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           
-          <div>
-            <label>Due Date</label>
-            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="repair-due-date">Due Date</Label>
+            <Input 
+              id="repair-due-date"
+              type="date" 
+              value={dueDate} 
+              onChange={(e) => setDueDate(e.target.value)} 
+            />
           </div>
           
-          <div>
-            <label>Bill / Total Price ($)</label>
-            <Input type="number" value={totalPrice} onChange={(e) => setTotalPrice(Number(e.target.value))} />
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="repair-price">Bill / Total Price ($)</Label>
+            <Input 
+              id="repair-price"
+              type="number" 
+              value={totalPrice} 
+              onChange={(e) => setTotalPrice(Number(e.target.value))} 
+            />
           </div>
 
-          <Button type="submit" className="w-full mt-4 col-span-full">Create Work Order</Button>
+          <Button type="submit" className="w-full mt-4 col-span-full">
+            Create Work Order
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

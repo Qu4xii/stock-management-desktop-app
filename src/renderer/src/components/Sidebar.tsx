@@ -1,17 +1,20 @@
-// In src/renderer/src/components/Sidebar.tsx
+// File: src/renderer/src/components/Sidebar.tsx
 
 import { Link, useLocation } from 'react-router-dom'
-// --- 1. IMPORT THE LogOut ICON AND useAuth HOOK ---
 import { Home, Users, Package, Wrench, History, Clipboard, LogOut } from 'lucide-react'
-import { useAuth } from '../context/AuthContext' // Adjust path if needed
+import { useAuth } from '../context/AuthContext'
+// [PERMISSIONS] Step 1: Import our new usePermissions hook
+import { usePermissions } from '../hooks/usePermissions'
 
 /**
  * The Sidebar component provides the main navigation for the application.
+ * It now dynamically renders links based on the current user's role.
  */
 function Sidebar(): JSX.Element {
   const location = useLocation()
-  // --- 2. GET THE logOut FUNCTION FROM THE AUTH CONTEXT ---
   const { logOut } = useAuth()
+  // [PERMISSIONS] Step 2: Get the 'can' function from the hook
+  const { can } = usePermissions()
 
   const isActive = (path: string): boolean => location.pathname === path
 
@@ -24,7 +27,6 @@ function Sidebar(): JSX.Element {
   }
 
   return (
-    // The main container is a flex column, which is perfect for this.
     <aside className="w-64 bg-muted p-4 flex flex-col flex-shrink-0">
       <div>
         <div className="mb-8 text-center">
@@ -32,38 +34,58 @@ function Sidebar(): JSX.Element {
           <p className="text-sm text-muted-foreground">by Mohamed ahmed miled</p>
         </div>
         <nav className="flex flex-col space-y-2">
-          {/* Dashboard Link */}
-          <Link to="/" className={navLinkClasses('/')}>
-            <Home className="w-5 h-5 mr-3" />
-            Dashboard
-          </Link>
+          {/* [PERMISSIONS] Step 3: Wrap each link in a permission check */}
 
-          {/* ... other links ... */}
-          <Link to="/clients" className={navLinkClasses('/clients')}>
-            <Users className="w-5 h-5 mr-3" />
-            Clients
-          </Link>
-          <Link to="/products" className={navLinkClasses('/products')}>
-            <Package className="w-5 h-5 mr-3" />
-            Products
-          </Link>
-          <Link to="/staff" className={navLinkClasses('/staff')}>
-            <Clipboard className="w-5 h-5 mr-3" />
-            Staff
-          </Link>
-          <Link to="/history" className={navLinkClasses('/history')}>
-            <History className="w-5 h-5 mr-3" />
-            History
-          </Link>
-          <Link to="/repairs" className={navLinkClasses('/repairs')}>
-            <Wrench className="w-5 h-5 mr-3" />
-            Repairs
-          </Link>
+          {/* Dashboard is visible to most roles */}
+          {(can('dashboard:read-all') || can('dashboard:read-limited')) && (
+            <Link to="/" className={navLinkClasses('/')}>
+              <Home className="w-5 h-5 mr-3" />
+              Dashboard
+            </Link>
+          )}
+
+          {/* Clients is visible to Manager, Cashier, and Technician (read-only) */}
+          {can('clients:read') && (
+            <Link to="/clients" className={navLinkClasses('/clients')}>
+              <Users className="w-5 h-5 mr-3" />
+              Clients
+            </Link>
+          )}
+
+          {/* Products is visible to almost everyone for viewing */}
+          {can('products:read') && (
+            <Link to="/products" className={navLinkClasses('/products')}>
+              <Package className="w-5 h-5 mr-3" />
+              Products
+            </Link>
+          )}
+
+          {/* Staff is visible to Manager, Cashier, and Technician (self-only) */}
+          {(can('staff:read') || can('staff:read-self')) && (
+            <Link to="/staff" className={navLinkClasses('/staff')}>
+              <Clipboard className="w-5 h-5 mr-3" />
+              Staff
+            </Link>
+          )}
+
+          {/* History is only visible to Manager and Cashier */}
+          {can('history:read') && (
+            <Link to="/history" className={navLinkClasses('/history')}>
+              <History className="w-5 h-5 mr-3" />
+              History
+            </Link>
+          )}
+
+          {/* Repairs is visible to Manager, Cashier, and Technician */}
+          {(can('repairs:read') || can('repairs:read-assigned')) && (
+            <Link to="/repairs" className={navLinkClasses('/repairs')}>
+              <Wrench className="w-5 h-5 mr-3" />
+              Repairs
+            </Link>
+          )}
         </nav>
       </div>
 
-      {/* --- 3. ADD THE LOGOUT BUTTON --- */}
-      {/* 'mt-auto' pushes this div to the bottom of the flex container */}
       <div className="mt-auto">
         <button
           onClick={logOut}

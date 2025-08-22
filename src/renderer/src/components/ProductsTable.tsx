@@ -1,33 +1,38 @@
-// In src/renderer/src/components/ProductsTable.tsx
+// File: src/renderer/src/components/ProductsTable.tsx
 
-import { Product } from '../types';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
+import { Product } from '../types'
+import { Card } from './ui/card'
+import { Button } from './ui/button'
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from './ui/table';
-import { MoreHorizontal } from 'lucide-react'; // A common icon for an options menu
+  TableRow
+} from './ui/table'
+import { MoreHorizontal } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu'; // We will use a dropdown for the actions
+  DropdownMenuTrigger
+} from './ui/dropdown-menu'
+import { usePermissions } from '../hooks/usePermissions'
 
 interface ProductsTableProps {
-  products: Product[];
-  onEdit: (product: Product) => void;   // <-- NEW PROP: Function to handle editing
-  onDelete: (productId: number) => void; // <-- NEW PROP: Function to handle deleting
+  products: Product[]
+  onEdit: (product: Product) => void
+  onDelete: (productId: number) => void
 }
 
 function ProductsTable({ products, onEdit, onDelete }: ProductsTableProps): JSX.Element {
+  const { can } = usePermissions()
+
+  const canPerformAnyAction = can('products:update') || can('products:delete')
+
   return (
     <Card>
       <Table>
@@ -37,13 +42,18 @@ function ProductsTable({ products, onEdit, onDelete }: ProductsTableProps): JSX.
             <TableHead className="w-[150px]">Price</TableHead>
             <TableHead className="w-[150px]">Quantity</TableHead>
             <TableHead className="w-[150px]">Availability</TableHead>
-            <TableHead className="text-right w-[120px]">Actions</TableHead>
+            {/* [UI REFINEMENT] Only render the Actions header if actions are possible */}
+            {canPerformAnyAction && <TableHead className="text-right w-[120px]">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {products.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+              {/* Adjust colSpan based on whether the Actions column is rendered */}
+              <TableCell
+                colSpan={canPerformAnyAction ? 5 : 4}
+                className="h-24 text-center text-muted-foreground"
+              >
                 No products found.
               </TableCell>
             </TableRow>
@@ -54,50 +64,61 @@ function ProductsTable({ products, onEdit, onDelete }: ProductsTableProps): JSX.
                 <TableCell>${product.price.toFixed(2)}</TableCell>
                 <TableCell>{product.quantity}</TableCell>
                 <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                    product.quantity > 0 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                  }`}>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      product.quantity > 0
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                    }`}
+                  >
                     {product.quantity > 0 ? 'In Stock' : 'Out of Stock'}
                   </span>
                 </TableCell>
-                <TableCell className="text-right">
-                  {/* --- NEW ACTION DROPDOWN --- */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => onEdit(product)}>
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => {
-                          // It's good practice to confirm a destructive action like deleting.
-                          if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
-                            onDelete(product.id);
-                          }
-                        }}
-                        className="text-red-500 focus:text-red-500"
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+                {/* [UI REFINEMENT] Only render the cell for the Actions column if actions are possible */}
+                {canPerformAnyAction && (
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        {can('products:update') && (
+                          <DropdownMenuItem onClick={() => onEdit(product)}>Edit</DropdownMenuItem>
+                        )}
+                        {can('products:delete') && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    `Are you sure you want to delete "${product.name}"?`
+                                  )
+                                ) {
+                                  onDelete(product.id)
+                                }
+                              }}
+                              className="text-red-500 focus:text-red-500"
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                )}
               </TableRow>
             ))
           )}
         </TableBody>
       </Table>
     </Card>
-  );
+  )
 }
 
-export default ProductsTable;
+export default ProductsTable

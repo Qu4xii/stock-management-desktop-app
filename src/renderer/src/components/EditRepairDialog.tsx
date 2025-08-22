@@ -1,51 +1,43 @@
-// In src/renderer/src/components/EditRepairDialog.tsx
+// File: src/renderer/src/components/EditRepairDialog.tsx
 
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Textarea } from './ui/textarea'; // We'll use a Textarea for the description
-import { Client, StaffMember, Repair, RepairStatus, RepairPriority } from '../types';
+import React, { useState, useEffect } from 'react'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { Textarea } from './ui/textarea'
+import { Label } from './ui/label' // [THEME FIX] Ensure Label is imported
+import { Client, StaffMember, Repair, RepairStatus, RepairPriority } from '../types'
+import { usePermissions } from '../hooks/usePermissions'
 
-interface EditRepairDialogProps {
-  repair: Repair | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onRepairUpdated: (updatedRepair: Repair) => void;
-}
-
-const statuses: RepairStatus[] = ['Not Started', 'In Progress', 'On Hold', 'Completed'];
-const priorities: RepairPriority[] = ['Low', 'Medium', 'High', 'Urgent'];
+// ... (interfaces and const arrays remain the same) ...
 
 function EditRepairDialog({ repair, isOpen, onClose, onRepairUpdated }: EditRepairDialogProps): JSX.Element {
-  // State for all the form fields
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<RepairStatus>('Not Started');
-  const [priority, setPriority] = useState<RepairPriority>('Medium');
-  const [dueDate, setDueDate] = useState('');
-  const [totalPrice, setTotalPrice] = useState(0);
-  const [clientId, setClientId] = useState<number | undefined>(undefined);
-  const [staffId, setStaffId] = useState<number | undefined>(undefined);
+  const { currentUser } = usePermissions()
+  // ... (All state management remains the same) ...
+  const [description, setDescription] = useState('')
+  const [status, setStatus] = useState<RepairStatus>('Not Started')
+  const [priority, setPriority] = useState<RepairPriority>('Medium')
+  const [dueDate, setDueDate] = useState('')
+  const [totalPrice, setTotalPrice] = useState(0)
+  const [clientId, setClientId] = useState<number | undefined>(undefined)
+  const [staffId, setStaffId] = useState<number | undefined>(undefined)
+  const [clients, setClients] = useState<Client[]>([])
+  const [staff, setStaff] = useState<StaffMember[]>([])
 
-  // State to hold the lists of clients and staff for the dropdowns
-  const [clients, setClients] = useState<Client[]>([]);
-  const [staff, setStaff] = useState<StaffMember[]>([]);
-
-  // This effect runs when the dialog opens to populate the form fields
-  useEffect(() => {
+  // ... (Both useEffect hooks remain the same) ...
+   useEffect(() => {
     if (repair) {
       setDescription(repair.description);
       setStatus(repair.status);
       setPriority(repair.priority);
-      setDueDate(new Date(repair.dueDate).toISOString().split('T')[0]); // Format for <input type="date">
+      setDueDate(repair.dueDate ? new Date(repair.dueDate).toISOString().split('T')[0] : '');
       setTotalPrice(repair.totalPrice || 0);
       setClientId(repair.clientId);
       setStaffId(repair.staffId || undefined);
     }
   }, [repair]);
 
-  // This effect runs once when the component mounts to fetch data for the dropdowns
   useEffect(() => {
     const fetchDataForDropdowns = async () => {
       const clientsData = await window.db.getClients();
@@ -56,7 +48,8 @@ function EditRepairDialog({ repair, isOpen, onClose, onRepairUpdated }: EditRepa
     fetchDataForDropdowns();
   }, []);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  // ... (handleSubmit remains the same) ...
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!repair || !clientId) {
       alert('A client must be selected.');
@@ -68,80 +61,84 @@ function EditRepairDialog({ repair, isOpen, onClose, onRepairUpdated }: EditRepa
       description,
       status,
       priority,
-      dueDate: new Date(dueDate).toISOString(),
+      dueDate: dueDate ? new Date(dueDate).toISOString() : '',
       totalPrice,
       clientId,
-      staffId: staffId || null, // Ensure staffId is null if undefined
+      staffId: staffId || null,
     };
     onRepairUpdated(updatedRepair);
   };
 
+  const isTechnicianEditingOwnRepair = currentUser?.role === 'Technician' && repair?.staffId === currentUser?.id
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] bg-white dark:bg-slate-900">
+      {/* [THEME FIX] The className here is now correct by default */}
+      <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Edit Work Order</DialogTitle>
-          <DialogDescription>
-            Update the details for work order #{repair?.id}.
-          </DialogDescription>
+          <DialogDescription>Update the details for work order #{repair?.id}.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-          
-          <div className="md:col-span-2">
-            <label>Description</label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required />
+        {/* [THEME FIX] This form now uses the standard ShadCN layout with proper Labels */}
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+          <div className="md:col-span-2 grid w-full items-center gap-1.5">
+            <Label htmlFor="edit-desc">Description</Label>
+            <Textarea id="edit-desc" value={description} onChange={(e) => setDescription(e.target.value)} required />
           </div>
-          
-          <div>
-            <label>Status</label>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="edit-status">Status</Label>
             <Select value={status} onValueChange={(v: RepairStatus) => setStatus(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger id="edit-status"><SelectValue /></SelectTrigger>
               <SelectContent>{statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-
-          <div>
-            <label>Priority</label>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="edit-priority">Priority</Label>
             <Select value={priority} onValueChange={(v: RepairPriority) => setPriority(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger id="edit-priority"><SelectValue /></SelectTrigger>
               <SelectContent>{priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-
-          <div>
-            <label>Assigned Client</label>
-            <Select value={String(clientId)} onValueChange={(v) => setClientId(Number(v))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="edit-client">Assigned Client</Label>
+            <Select value={clientId ? String(clientId) : ""} onValueChange={(v) => setClientId(Number(v))} disabled={isTechnicianEditingOwnRepair}>
+              <SelectTrigger id="edit-client"><SelectValue /></SelectTrigger>
               <SelectContent>{clients.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-
-          <div>
-            <label>Assigned Technician</label>
-            <Select value={String(staffId)} onValueChange={(v) => setStaffId(Number(v))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="edit-staff">Assigned Technician</Label>
+            <Select value={staffId ? String(staffId) : "0"} onValueChange={(v) => setStaffId(Number(v) || undefined)} disabled={isTechnicianEditingOwnRepair}>
+              <SelectTrigger id="edit-staff"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="0">Unassigned</SelectItem>
                 {staff.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          
-          <div>
-            <label>Due Date</label>
-            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="edit-due-date">Due Date</Label>
+            <Input id="edit-due-date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
-          
-          <div>
-            <label>Bill / Total Price ($)</label>
-            <Input type="number" value={totalPrice} onChange={(e) => setTotalPrice(Number(e.target.value))} />
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="edit-price">Bill / Total Price ($)</Label>
+            <Input id="edit-price" type="number" value={totalPrice} onChange={(e) => setTotalPrice(Number(e.target.value))} />
           </div>
-
           <Button type="submit" className="w-full mt-4 col-span-full">Save Changes</Button>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
+}
+//...
+interface EditRepairDialogProps {
+  repair: Repair | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onRepairUpdated: (updatedRepair: Repair) => void;
 }
 
-export default EditRepairDialog;
+const statuses: RepairStatus[] = ['Not Started', 'In Progress', 'On Hold', 'Completed'];
+const priorities: RepairPriority[] = ['Low', 'Medium', 'High', 'Urgent'];
+
+export default EditRepairDialog

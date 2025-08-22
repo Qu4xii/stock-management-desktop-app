@@ -1,100 +1,102 @@
-// In src/renderer/src/main.tsx
+// File: src/renderer/src/main.tsx
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { createHashRouter, RouterProvider, Outlet } from 'react-router-dom';
-import './assets/index.css';
-import { ThemeProvider } from './components/ThemeProvider';
-import { AuthProvider } from './context/AuthContext'; // Correctly import AuthProvider
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { createHashRouter, RouterProvider, Outlet } from 'react-router-dom'
+import './assets/index.css'
+import { ThemeProvider } from './components/ThemeProvider'
+import { AuthProvider } from './context/AuthContext'
 
 // Import all pages and components
-import App from './App';
-import ProtectedRoute from './components/ProtectedRoute';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import DashboardPage from './pages/DashboardPage';
-import ClientsPage from './pages/ClientsPage';
-import ProductsPage from './pages/ProductsPage';
-import StaffPage from './pages/StaffPage';
-import HistoryPage from './pages/HistoryPage';
-import RepairsPage from './pages/RepairsPage';
-import ProfilePage from './pages/ProfilePage';
+import App from './App'
+import ProtectedRoute from './components/ProtectedRoute'
+import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
+import DashboardPage from './pages/DashboardPage'
+import ClientsPage from './pages/ClientsPage'
+import ProductsPage from './pages/ProductsPage'
+import StaffPage from './pages/StaffPage'
+import HistoryPage from './pages/HistoryPage'
+import RepairsPage from './pages/RepairsPage'
+import ProfilePage from './pages/ProfilePage'
+// [PERMISSIONS] Import the new waiting page
+import WaitingForApprovalPage from './pages/WaitingForApprovalPage'
 
-// --- THIS IS THE FIX ---
-// 1. Create a Root component that provides the context.
-//    The <Outlet /> will render the matched child route (e.g., LoginPage or ProtectedRoute).
 const Root = () => {
   return (
     <AuthProvider>
       <Outlet />
     </AuthProvider>
-  );
-};
+  )
+}
 
-// 2. Restructure the router.
 const router = createHashRouter([
   {
     path: '/',
-    element: <Root />, // The Root component is now the entry point.
+    element: <Root />,
     children: [
-      // Public routes are now direct children
+      // --- Public routes ---
       {
         path: 'login',
-        element: <LoginPage />,
+        element: <LoginPage />
       },
       {
         path: 'signup',
-        element: <SignupPage />,
+        element: <SignupPage />
       },
-      // The ProtectedRoute now correctly sits inside the AuthProvider's context.
+      // [PERMISSIONS] Add the new waiting page as a public route
       {
-        element: <ProtectedRoute />,
+        path: 'waiting-for-approval',
+        element: <WaitingForApprovalPage />
+      },
+
+      // --- Protected application routes ---
+      {
+        element: <ProtectedRoute />, // The guard that checks authentication AND role
         children: [
           {
             element: <App />, // Your main layout with sidebar
             children: [
-              // All your protected pages
               {
-                index: true, // This makes Dashboard the default for "/"
-                element: <DashboardPage />,
+                index: true,
+                element: <DashboardPage />
               },
               {
                 path: 'clients',
-                element: <ClientsPage />,
+                element: <ClientsPage />
               },
               {
                 path: 'products',
-                element: <ProductsPage />,
+                element: <ProductsPage />
               },
               {
                 path: 'staff',
-                element: <StaffPage />,
+                element: <StaffPage />
               },
               {
                 path: 'history',
-                element: <HistoryPage />,
+                element: <HistoryPage />
               },
               {
                 path: 'repairs',
-                element: <RepairsPage />,
+                element: <RepairsPage />
               },
               {
                 path: 'profile',
-                element: <ProfilePage />,
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-]);
+                element: <ProfilePage />
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+])
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    {/* ThemeProvider can remain the outermost provider */}
     <ThemeProvider defaultTheme="dark" storageKey="vite-react-electron-theme">
       <RouterProvider router={router} />
     </ThemeProvider>
   </React.StrictMode>
-);
+)

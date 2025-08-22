@@ -1,54 +1,63 @@
-// In src/renderer/src/components/AddClientForm.tsx
-import React, { useState } from 'react';
-import { Client } from '../types';
+// File: src/renderer/src/components/AddClientForm.tsx
+
+import React, { useState } from 'react'
+import { Client } from '../types'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Label } from './ui/label'
 
 interface AddClientFormProps {
-  onClientAdded: (clientData: Omit<Client, 'id' | 'picture'>) => void;
+  onClientAdded: (clientData: Omit<Client, 'id' | 'picture'>) => void
 }
 
 function AddClientForm({ onClientAdded }: AddClientFormProps): JSX.Element {
-  const [name, setName] = useState('');
-  const [idCard, setIdCard] = useState('');
-  const [address, setAddress] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [name, setName] = useState('')
+  const [idCard, setIdCard] = useState('')
+  const [address, setAddress] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    event.preventDefault()
     if (!name || !idCard || !email) {
-      alert('Please fill out at least Name, ID Card, and Email.');
-      return;
+      // Using toast for consistency is better than alert()
+      toast.error('Please fill out at least Name, ID Card, and Email.')
+      return
     }
-    onClientAdded({ name, idCard, address, email, phone });
-  };
-  
+    onClientAdded({ name, idCard, address, email, phone })
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium dark:text-slate-300">Full Name</label>
-        <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full px-3 py-2 border rounded-md dark:bg-slate-700 dark:border-slate-600" required />
+    // This structure is more idiomatic for ShadCN forms.
+    // Each form item is a div containing a Label and an Input.
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+      <div className="grid w-full items-center gap-1.5">
+        <Label htmlFor="name">Full Name</Label>
+        <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
       </div>
-      <div>
-        <label htmlFor="idCard" className="block text-sm font-medium dark:text-slate-300">ID Card Number</label>
-        <input id="idCard" type="text" value={idCard} onChange={(e) => setIdCard(e.target.value)} className="mt-1 block w-full px-3 py-2 border rounded-md dark:bg-slate-700 dark:border-slate-600" required />
+      <div className="grid w-full items-center gap-1.5">
+        <Label htmlFor="idCard">ID Card Number</Label>
+        <Input id="idCard" type="text" value={idCard} onChange={(e) => setIdCard(e.target.value)} required />
       </div>
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium dark:text-slate-300">Email Address</label>
-        <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 block w-full px-3 py-2 border rounded-md dark:bg-slate-700 dark:border-slate-600" required />
+      <div className="grid w-full items-center gap-1.5">
+        <Label htmlFor="email">Email Address</Label>
+        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </div>
-      <div>
-        <label htmlFor="phone" className="block text-sm font-medium dark:text-slate-300">Phone Number</label>
-        <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1 block w-full px-3 py-2 border rounded-md dark:bg-slate-700 dark:border-slate-600" />
+      <div className="grid w-full items-center gap-1.5">
+        <Label htmlFor="phone">Phone Number</Label>
+        <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
       </div>
-      <div className="col-span-full">
-        <label htmlFor="address" className="block text-sm font-medium dark:text-slate-300">Address</label>
-        <input id="address" type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="mt-1 block w-full px-3 py-2 border rounded-md dark:bg-slate-700 dark:border-slate-600" />
+      <div className="col-span-full grid w-full items-center gap-1.5">
+        <Label htmlFor="address">Address</Label>
+        <Input id="address" type="text" value={address} onChange={(e) => setAddress(e.target.value)} />
       </div>
-      <button type="submit" className="w-full py-3 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-700 col-span-full">
+      <Button type="submit" className="w-full mt-4 col-span-full">
         Save Client
-      </button>
+      </Button>
     </form>
-  );
+  )
 }
 
-export default AddClientForm;
+// We'll need to import toast if we use it. If not, the alert is fine.
+import { toast } from 'sonner'
+export default AddClientForm

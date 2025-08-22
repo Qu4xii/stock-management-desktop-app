@@ -230,7 +230,7 @@ export const staffApi = {
     const hashedPassword = await bcrypt.hash(data.password, saltRounds);
     const stmt = db.prepare(
       `INSERT INTO staff (name, email, phone, password, role, isAvailable) 
-      VALUES (@name, @email, @phone, @password, 'Technician', 1)`
+      VALUES (@name, @email, @phone, @password, 'Not Assigned', 1)`
     );
     try {
       const info = stmt.run({ ...data, password: hashedPassword });
@@ -345,7 +345,53 @@ export const repairsApi = {
     `;
     return db.prepare(query).get(id) as Repair;
   },
+getForStaff(staffId: number) {
+  const sql = `
+    SELECT 
+      r.*, 
+      c.name as clientName,
+      c.address as clientLocation, -- This is my best guess for the correct column name
+      s.name as staffName
+    FROM repairs r
+    LEFT JOIN clients c ON r.clientId = c.id
+    LEFT JOIN staff s ON r.staffId = s.id
+    WHERE r.staffId = ?
+    ORDER BY r.requestDate DESC -- This is my best guess for the correct column name
+  `
+  try {
+    return db.prepare(sql).all(staffId)
+  } catch (error) {
+    // [CRITICAL FIX] Log the ORIGINAL error object to see the real SQL error.
+    console.error(`DATABASE QUERY FAILED for getForStaff. Staff ID: ${staffId}.`);
+    console.error('--- SQL QUERY ---');
+    console.error(sql);
+    console.error('--- ORIGINAL ERROR ---');
+    console.error(error); // This will print the detailed SQLite error message.
 
+    // Throw a more informative error back to the IPC handler
+    throw new Error('Failed to fetch repairs for staff member due to a database query error. Check main process console for details.');
+  }
+},
+getForClientByStaff(clientId: number, staffId: number) {
+    const sql = `
+      SELECT 
+        r.id, r.description, r.status, r.priority, r.requestDate, 
+        r.dueDate, r.totalPrice, r.clientId, r.staffId,
+        c.name as clientName,
+        s.name as staffName
+      FROM repairs AS r
+      LEFT JOIN clients AS c ON r.clientId = c.id
+      LEFT JOIN staff AS s ON r.staffId = s.id
+      WHERE r.clientId = ? AND r.staffId = ?
+      ORDER BY r.requestDate DESC
+    `
+    try {
+      return db.prepare(sql).all(clientId, staffId)
+    } catch (error: any) {
+      console.error(`Failed to get repairs for client ${clientId} by staff ${staffId}:`, error)
+      throw new Error(`Failed to fetch repairs. Reason: ${error.message}`)
+    }
+  },
   // CREATE: Add a new repair
   add: (data: Omit<Repair, 'id' | 'clientName' | 'staffName' | 'clientLocation'>): { id: number } => {
     const stmt = db.prepare(
