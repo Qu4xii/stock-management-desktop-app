@@ -1,4 +1,4 @@
-// src/renderer/src/context/AuthContext.tsx
+// Updated AuthContext.tsx
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { StaffMember } from '../types';
 
@@ -8,7 +8,7 @@ interface AuthContextType {
   logIn: (credentials: { email: string; password: string }) => Promise<void>;
   signUp: (data: Pick<StaffMember, 'name' | 'email' | 'phone'> & { password: string }) => Promise<void>;
   logOut: () => void;
-  updateCurrentUser: (user: StaffMember) => void; // Added this method
+  updateCurrentUser: (user: StaffMember) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,12 +20,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logIn = async (credentials: { email: string; password: string }) => {
     setIsLoading(true);
     try {
+      // Validate input
+      if (!credentials.email || !credentials.password) {
+        throw new Error("Email and password are required.");
+      }
+
       const user = await window.db.logIn(credentials);
+      
       if (user) {
         setCurrentUser(user);
       } else {
+        // If user is null/undefined, throw a specific error
         throw new Error("Invalid email or password.");
       }
+    } catch (error: any) {
+      // Re-throw the error so it can be caught in the component
+      throw new Error(error.message || "Login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -34,8 +44,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (data: Pick<StaffMember, 'name' | 'email' | 'phone'> & { password: string }) => {
     setIsLoading(true);
     try {
+      // Validate input
+      if (!data.name || !data.email || !data.password) {
+        throw new Error("Name, email, and password are required.");
+      }
+
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(data.email)) {
+        throw new Error("Please enter a valid email address.");
+      }
+
+      // Password strength validation
+      if (data.password.length < 6) {
+        throw new Error("Password must be at least 6 characters long.");
+      }
+
       const newUser = await window.db.signUp(data);
-      setCurrentUser(newUser); // Automatically log in the user after signup
+      
+      if (newUser) {
+        setCurrentUser(newUser);
+      } else {
+        throw new Error("Failed to create account. Please try again.");
+      }
+    } catch (error: any) {
+      // Re-throw the error so it can be caught in the component
+      throw new Error(error.message || "Account creation failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -45,19 +79,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null);
   };
 
-  // New method to update current user after profile changes
   const updateCurrentUser = (user: StaffMember) => {
     setCurrentUser(user);
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      currentUser, 
-      isLoading, 
-      logIn, 
-      signUp, 
-      logOut, 
-      updateCurrentUser 
+    <AuthContext.Provider value={{
+      currentUser,
+      isLoading,
+      logIn,
+      signUp,
+      logOut,
+      updateCurrentUser
     }}>
       {children}
     </AuthContext.Provider>

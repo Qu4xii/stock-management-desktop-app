@@ -1,5 +1,4 @@
 // src/main/index.ts
-import PDFDocument from 'pdfkit-table';
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron';
 import { join } from 'path';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
@@ -7,6 +6,9 @@ import icon from '../../resources/icon.png?asset';
 import fs from 'fs';
 import { clientsApi, productsApi, purchasesApi, staffApi, repairsApi, historyApi, dashboardApi, exportApi} from './lib/db';
 import path from "path";
+import * as PDFKit from 'pdfkit';
+const PDFDocument = require('pdfkit-table');
+
 
 
 function registerIpcHandlers(): void {

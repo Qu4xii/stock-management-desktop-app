@@ -14,12 +14,20 @@ function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Client-side validation
+    if (!email.trim() || !password.trim()) {
+      toast.error("Please fill in all fields.");
+      return;
+    }
+
     try {
-      await logIn({ email, password });
+      await logIn({ email: email.trim(), password });
       toast.success("Login successful!");
-      navigate('/'); // Redirect to dashboard on success
+      navigate('/');
     } catch (error: any) {
-      toast.error(error.message);
+      console.error('Login error:', error); // For debugging
+      toast.error(error.message || "Login failed. Please try again.");
     }
   };
 
@@ -32,8 +40,22 @@ function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <Input 
+              type="email" 
+              placeholder="Email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
+              disabled={isLoading}
+            />
+            <Input 
+              type="password" 
+              placeholder="Password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
+              disabled={isLoading}
+            />
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Login'}
             </Button>
