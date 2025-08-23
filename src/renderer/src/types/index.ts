@@ -104,7 +104,7 @@ export interface DBApi {
     items: { id: number; quantity: number }[]
   }) => Promise<{ id: number }>
   getPurchasesForClient: (clientId: number) => Promise<Purchase[]>
-
+  getRepairsForClientByStaff: (clientId: number) => Promise<Repair[]>
   // Repair Methods
   getRepairsForClient: (clientId: number) => Promise<Repair[]>
   getRepairs: () => Promise<Repair[]>
@@ -134,8 +134,12 @@ export interface DBApi {
   // [SECURITY] ADD THIS LINE
   logOut: () => Promise<{ success: boolean }>
 
-  // Export Methods
-  generateClientReport: (options: ExportOptions) => Promise<{ success: boolean; message?: string }>
+  exportClientReport: (options: {
+    clientId: number;
+    clientName: string;
+    purchaseIds?: number[];
+    repairIds?: number[];
+  }) => Promise<{ success: boolean; message: string }>;
 }
 
 export type RepairStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed'

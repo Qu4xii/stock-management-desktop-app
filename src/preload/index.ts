@@ -37,7 +37,7 @@ const dbApi: DBApi = {
   updateRepair: (data) => ipcRenderer.invoke('db:repairs-update', data),
   deleteRepair: (id) => ipcRenderer.invoke('db:repairs-delete', id),
   getRepairsForClient: (clientId) => ipcRenderer.invoke('db:repairs-getForClient', clientId),
-
+  getRepairsForClientByStaff: (clientId) => ipcRenderer.invoke('db:repairs-getForClientByStaff', clientId),
   // --- HISTORY & DASHBOARD ---
   getHistory: () => ipcRenderer.invoke('db:history-get'),
   getDashboardStats: () => ipcRenderer.invoke('db:dashboard-getStats'),
@@ -53,8 +53,12 @@ const dbApi: DBApi = {
   // [SECURITY] ADD THIS LINE TO COMPLETE THE BRIDGE
   logOut: () => ipcRenderer.invoke('auth:logOut'),
 
-  // --- EXPORT ---
-  generateClientReport: (options) => ipcRenderer.invoke('db:export-clientReport', options)
+exportClientReport: (options: {
+  clientId: number;
+  clientName: string;
+  purchaseIds?: number[];
+  repairIds?: number[];
+}) => ipcRenderer.invoke('db:export-clientReport', options),
 }
 
 // --- SECURELY EXPOSE THE APIS ---
