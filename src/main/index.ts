@@ -309,7 +309,53 @@ function registerIpcHandlers(): void {
     'db:dashboard-getRecentRepairs',
     protectedHandler('dashboard:read-all', () => dashboardApi.getRecentRepairs())
   )
+// ===================================================================
+  // --- TECHNICIAN-SPECIFIC DASHBOARD HANDLERS ---
+  // Ensure this entire block exists in your file.
+  // ===================================================================
 
+  // This handler securely gets the stats for the logged-in user.
+  ipcMain.handle('db:dashboard-getTechnicianStats', async (event) => {
+    const user = getUserFromEvent(event);
+    if (!user) throw new Error('Authentication Required.');
+    if (!hasPermission(user.role, 'dashboard:read-limited')) throw new Error('Unauthorized');
+    
+    // It uses the user's ID from the secure session, not from the frontend.
+    return dashboardApi.getTechnicianStats(user.id);
+  });
+
+  // This handler gets the status breakdown for the logged-in user.
+  ipcMain.handle('db:dashboard-getTechnicianWorkOrdersByStatus', async (event) => {
+    const user = getUserFromEvent(event);
+    if (!user) throw new Error('Authentication Required.');
+    if (!hasPermission(user.role, 'dashboard:read-limited')) throw new Error('Unauthorized');
+
+    return dashboardApi.getTechnicianWorkOrdersByStatus(user.id);
+  });
+
+  // This handler gets the active repair list for the logged-in user.
+  ipcMain.handle('db:dashboard-getActiveRepairsForStaff', async (event) => {
+    const user = getUserFromEvent(event);
+    if (!user) throw new Error('Authentication Required.');
+    if (!hasPermission(user.role, 'dashboard:read-limited')) throw new Error('Unauthorized');
+    
+    return dashboardApi.getActiveRepairsForStaff(user.id);
+  });
+
+  // ===================================================================
+  // --- INVENTORY-SPECIFIC DASHBOARD HANDLERS ---
+  // ===================================================================
+  
+  ipcMain.handle(
+    'db:dashboard-getInventoryStats',
+    protectedHandler('dashboard:read-limited', () => dashboardApi.getInventoryStats())
+  );
+
+  ipcMain.handle(
+    'db:dashboard-getLowStockProducts',
+    protectedHandler('dashboard:read-limited', () => dashboardApi.getLowStockProducts())
+  );
+  
   // Profile management is a special case - users can manage their own profile
   ipcMain.handle('db:staff-updateProfile', async (event, data) => {
     const user = getUserFromEvent(event)

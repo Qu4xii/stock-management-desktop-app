@@ -46,7 +46,17 @@ const dbApi: DBApi = {
   getDailySales: () => ipcRenderer.invoke('db:dashboard-getDailySales'),
   getRecentPurchases: () => ipcRenderer.invoke('db:dashboard-getRecentPurchases'),
   getRecentRepairs: () => ipcRenderer.invoke('db:dashboard-getRecentRepairs'),
-
+    // ===================================================================
+  // --- ADD THESE THREE LINES FOR THE TECHNICIAN DASHBOARD ---
+  // ===================================================================
+  getTechnicianStats: () => ipcRenderer.invoke('db:dashboard-getTechnicianStats'),
+  getTechnicianWorkOrdersByStatus: () => ipcRenderer.invoke('db:dashboard-getTechnicianWorkOrdersByStatus'),
+  getActiveRepairsForStaff: () => ipcRenderer.invoke('db:dashboard-getActiveRepairsForStaff'),
+  // ===================================================================
+  // --- INVENTORY DASHBOARD METHODS ---
+  // ===================================================================
+  getInventoryStats: () => ipcRenderer.invoke('db:dashboard-getInventoryStats'),
+  getLowStockProducts: () => ipcRenderer.invoke('db:dashboard-getLowStockProducts'),
   // --- AUTHENTICATION ---
   signUp: (data) => ipcRenderer.invoke('db:auth-signUp', data),
   logIn: (credentials) => ipcRenderer.invoke('db:auth-logIn', credentials),

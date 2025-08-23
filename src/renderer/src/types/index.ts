@@ -57,7 +57,28 @@ export interface HistoryEvent {
   secondaryDetail: string | null // The assigned staff member for a repair
   totalPrice: number | null
 }
+// --- ADD THESE NEW INTERFACES FOR THE TECHNICIAN DASHBOARD ---
+export interface TechnicianStats {
+  activeAssigned: number;
+  totalCompleted: number;
+  overdue: number;
+}
 
+export interface ActiveRepair {
+  id: number;
+  description: string;
+  priority: RepairPriority;
+  dueDate: string;
+  clientName: string;
+}
+
+export interface InventoryStats {
+  totalSKUs: number;
+  totalUnits: number;
+  stockValue: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+}
 // --- API and Global Window Definitions ---
 
 /**
@@ -124,7 +145,13 @@ export interface DBApi {
   getDailySales: () => Promise<DailySalesPoint[]>
   getRecentPurchases: () => Promise<RecentPurchase[]>
   getRecentRepairs: () => Promise<Repair[]>
-
+  // --- TECHNICIAN DASHBOARD METHODS  ---
+  getTechnicianStats: () => Promise<TechnicianStats>;
+  getTechnicianWorkOrdersByStatus: () => Promise<ChartDataPoint[]>;
+  getActiveRepairsForStaff: () => Promise<ActiveRepair[]>;
+  // ---INVENTORY DASHBOARD METHODS  ---
+  getInventoryStats: () => Promise<InventoryStats>;
+  getLowStockProducts: () => Promise<Product[]>;
   // Authentication Methods
   signUp: (
     data: Pick<StaffMember, 'name' | 'email' | 'phone'> & { password: string }

@@ -598,9 +598,97 @@ export const dashboardApi = {
       LIMIT 5;
     `;
     return db.prepare(query).all();
-  }
+  },
+  // ===================================================================
+  // --- NEW TECHNICIAN DASHBOARD FUNCTIONS ---
+  // ===================================================================
 
+  /**
+   * Gets specific KPI stats for a single staff member.
+   * @param staffId The ID of the technician.
+   */
+  getTechnicianStats: (staffId: number) => {
+    const stmt = db.prepare(`
+      SELECT
+        SUM(CASE WHEN status != 'Completed' THEN 1 ELSE 0 END) as activeAssigned,
+        SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as totalCompleted,
+        SUM(CASE WHEN status != 'Completed' AND date(dueDate) < date('now') THEN 1 ELSE 0 END) as overdue
+      FROM repairs
+      WHERE staffId = ?
+    `);
+    const result = stmt.get(staffId) as { activeAssigned: number | null; totalCompleted: number | null; overdue: number | null; };
+    return {
+      activeAssigned: result.activeAssigned || 0,
+      totalCompleted: result.totalCompleted || 0,
+      overdue: result.overdue || 0,
+    };
+  },
+
+  /**
+   * Gets the status breakdown for work orders assigned to a specific technician.
+   * @param staffId The ID of the technician.
+   */
+  getTechnicianWorkOrdersByStatus: (staffId: number) => {
+    return db.prepare(`
+      SELECT status as name, COUNT(*) as value
+      FROM repairs
+      WHERE staffId = ? AND status != 'Completed'
+      GROUP BY status
+    `).all(staffId);
+  },
+  
+  /**
+   * Gets the list of active (non-completed) repairs for a specific staff member.
+   * @param staffId The ID of the technician.
+   */
+  getActiveRepairsForStaff: (staffId: number) => {
+    return db.prepare(`
+      SELECT r.id, r.description, r.priority, r.dueDate, c.name as clientName
+      FROM repairs r
+      JOIN clients c ON r.clientId = c.id
+      WHERE r.staffId = ? AND r.status != 'Completed'
+      ORDER BY date(r.dueDate) ASC
+    `).all(staffId);
+  },
+
+  // ===================================================================
+  // --- NEW INVENTORY DASHBOARD FUNCTIONS ---
+  // ===================================================================
+
+  /**
+   * Gets key performance indicators related to product inventory.
+   */
+  getInventoryStats: () => {
+    const lowStockThreshold = 5; // Define what "low stock" means
+
+    const stats = db.transaction(() => {
+      const totalSKUs = (db.prepare('SELECT COUNT(*) as count FROM products').get() as { count: number }).count;
+      const totalUnits = (db.prepare('SELECT SUM(quantity) as total FROM products').get() as { total: number | null }).total || 0;
+      const stockValue = (db.prepare('SELECT SUM(quantity * price) as total FROM products').get() as { total: number | null }).total || 0;
+      const lowStockCount = (db.prepare(`SELECT COUNT(*) as count FROM products WHERE quantity > 0 AND quantity <= ?`).get(lowStockThreshold) as { count: number }).count;
+      const outOfStockCount = (db.prepare('SELECT COUNT(*) as count FROM products WHERE quantity = 0').get() as { count: number }).count;
+      
+      return { totalSKUs, totalUnits, stockValue, lowStockCount, outOfStockCount };
+    })();
+    
+    return stats;
+  },
+
+  /**
+   * Gets a list of all products that are considered low in stock.
+   */
+  getLowStockProducts: () => {
+    const lowStockThreshold = 5;
+    // Returns products that are low on stock, with the most critical (lowest quantity) first.
+    return db.prepare(`
+      SELECT id, name, quantity, price 
+      FROM products 
+      WHERE quantity <= ? 
+      ORDER BY quantity ASC
+    `).all(lowStockThreshold);
+  }
 };
+
 // Export API for external usage
 export const exportApi = {
   // This function gets specific purchase records by their IDs for a given client.
