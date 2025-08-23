@@ -1,30 +1,27 @@
-// File: src/renderer/src/components/ProtectedRoute.tsx
+// File: src/renderer/src/components/ProtectedRoute.tsx (Corrected)
 
 import React from 'react'
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { StaffRole } from '../types' // Import the StaffRole type
+import WaitingForApprovalPage from '../pages/WaitingForApprovalPage' // We'll render this directly
 
 function ProtectedRoute() {
   const { currentUser } = useAuth()
-  const location = useLocation()
 
   // Case 1: No user is logged in.
-  // Redirect them to the login page.
+  // Redirect them to the login page immediately. This is the key for logout redirection.
   if (!currentUser) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    return <Navigate to="/login" replace />
   }
 
   // Case 2: User is logged in, but their role is 'Not Assigned'.
-  // Redirect them to the waiting page. We must also make sure they aren't *already* on
-  // the waiting page to avoid an infinite redirect loop.
-  const isNotAssigned = currentUser.role === ('Not Assigned' as StaffRole)
-  if (isNotAssigned && location.pathname !== '/waiting-for-approval') {
-    return <Navigate to="/waiting-for-approval" replace />
+  // Instead of redirecting, this component will now RENDER the waiting page.
+  if (currentUser.role === 'Not Assigned') {
+    return <WaitingForApprovalPage />
   }
 
-  // Case 3: User is logged in and has an assigned role.
-  // Allow them to access the main application content.
+  // Case 3: User is logged in and has an approved role.
+  // Render the <Outlet />, which will be the main <App /> layout.
   return <Outlet />
 }
 

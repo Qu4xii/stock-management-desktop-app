@@ -281,7 +281,34 @@ function registerIpcHandlers(): void {
     'db:purchases-getForClient',
     protectedHandler('clients:read', (clientId) => purchasesApi.getForClient(clientId))
   )
+  // [SECURITY] New handler to get repairs for a client but only those assigned to the logged-in technician
+  ipcMain.handle('db:repairs-getForClientByStaff', async (event, clientId) => {
+    try {
+      // 1. Securely get the logged-in user from their window session.
+      const user = getUserFromEvent(event)
+      if (!user) {
+        throw new Error('Authentication Required.')
+      }
 
+      // 2. We don't need a permission check here because we are explicitly
+      //    checking the role and using the user's own ID for the query.
+      if (user.role !== 'Technician') {
+         // If a non-technician somehow calls this, we can fall back to the general function.
+         // Or throw an error, but this is safer.
+        return repairsApi.getForClient(clientId);
+      }
+
+      // 3. Call the database function using the clientId from the frontend
+      //    AND the user.id from the secure session. This prevents a technician
+      //    from ever seeing another technician's work.
+      console.log(`[IPC] Fetching repairs for client ${clientId} by staff ${user.id}`);
+      return repairsApi.getForClientByStaff(clientId, user.id)
+
+    } catch (error) {
+      console.error('[IPC Error] getForClientByStaff failed:', error);
+      throw error; // Re-throw the error so the frontend can catch it and display a toast.
+    }
+  })
   ipcMain.handle('db:history-get', protectedHandler('history:read', () => historyApi.get()))
 
   // Dashboard handlers (we'll need to create limited versions for some roles later)

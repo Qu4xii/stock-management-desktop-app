@@ -1,4 +1,4 @@
-// File: src/renderer/src/main.tsx
+// File: src/renderer/src/main.tsx (Corrected)
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
@@ -19,74 +19,38 @@ import StaffPage from './pages/StaffPage'
 import HistoryPage from './pages/HistoryPage'
 import RepairsPage from './pages/RepairsPage'
 import ProfilePage from './pages/ProfilePage'
-// [PERMISSIONS] Import the new waiting page
-import WaitingForApprovalPage from './pages/WaitingForApprovalPage'
-
-const Root = () => {
-  return (
-    <AuthProvider>
-      <Outlet />
-    </AuthProvider>
-  )
-}
+// We no longer need to import WaitingForApprovalPage here.
 
 const router = createHashRouter([
+  // --- Public routes ---
+  // These routes do NOT go through the ProtectedRoute
+  {
+    path: '/login',
+    element: <LoginPage />
+  },
+  {
+    path: '/signup',
+    element: <SignupPage />
+  },
+
+  // --- Protected Application Entry Point ---
+  // This single route definition handles ALL authenticated states.
   {
     path: '/',
-    element: <Root />,
+    element: <ProtectedRoute />, // The "gatekeeper" is the parent element.
     children: [
-      // --- Public routes ---
+      // If the user is approved, the <Outlet /> in ProtectedRoute will render this:
       {
-        path: 'login',
-        element: <LoginPage />
-      },
-      {
-        path: 'signup',
-        element: <SignupPage />
-      },
-      // [PERMISSIONS] Add the new waiting page as a public route
-      {
-        path: 'waiting-for-approval',
-        element: <WaitingForApprovalPage />
-      },
-
-      // --- Protected application routes ---
-      {
-        element: <ProtectedRoute />, // The guard that checks authentication AND role
+        path: '/',
+        element: <App />, // Your main layout with sidebar
         children: [
-          {
-            element: <App />, // Your main layout with sidebar
-            children: [
-              {
-                index: true,
-                element: <DashboardPage />
-              },
-              {
-                path: 'clients',
-                element: <ClientsPage />
-              },
-              {
-                path: 'products',
-                element: <ProductsPage />
-              },
-              {
-                path: 'staff',
-                element: <StaffPage />
-              },
-              {
-                path: 'history',
-                element: <HistoryPage />
-              },
-              {
-                path: 'repairs',
-                element: <RepairsPage />
-              },
-              {
-                path: 'profile',
-                element: <ProfilePage />
-              }
-            ]
-          }
+          { index: true, element: <DashboardPage /> },
+          { path: 'clients', element: <ClientsPage /> },
+          { path: 'products', element: <ProductsPage /> },
+          { path: 'staff', element: <StaffPage /> },
+          { path: 'history', element: <HistoryPage /> },
+          { path: 'repairs', element: <RepairsPage /> },
+          { path: 'profile', element: <ProfilePage /> }
         ]
       }
     ]
@@ -95,8 +59,10 @@ const router = createHashRouter([
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <ThemeProvider defaultTheme="dark" storageKey="vite-react-electron-theme">
-      <RouterProvider router={router} />
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider defaultTheme="dark" storageKey="vite-react-electron-theme">
+        <RouterProvider router={router} />
+      </ThemeProvider>
+    </AuthProvider>
   </React.StrictMode>
 )
