@@ -102,6 +102,51 @@ const createTables = (): void => {
         FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE SET NULL
       );
     `);
+
+    // ===================================================================
+    // --- NEW TABLES FOR SUPPLIERS AND PURCHASE ORDERS ---
+    // ===================================================================
+
+    // SQL for the 'suppliers' table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS suppliers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        contactPerson TEXT,
+        email TEXT,
+        phone TEXT,
+        address TEXT
+      );
+    `);
+    
+    // SQL for the 'purchase_orders' table
+    // We will build the functionality for this in the next phase.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS purchase_orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        supplierId INTEGER NOT NULL,
+        status TEXT NOT NULL DEFAULT 'Pending', -- e.g., Pending, Ordered, Received
+        orderDate TEXT NOT NULL,
+        expectedDate TEXT,
+        totalCost REAL,
+        FOREIGN KEY (supplierId) REFERENCES suppliers (id) ON DELETE RESTRICT
+      );
+    `);
+    
+    // SQL for the 'purchase_order_items' join table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS purchase_order_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        purchaseOrderId INTEGER NOT NULL,
+        productId INTEGER NOT NULL,
+        quantity INTEGER NOT NULL,
+        costPrice REAL NOT NULL, -- The cost of the item at the time of order
+        FOREIGN KEY (purchaseOrderId) REFERENCES purchase_orders (id) ON DELETE CASCADE,
+        FOREIGN KEY (productId) REFERENCES products (id) ON DELETE RESTRICT
+      );
+    `);
+
+  
   })();
 }
 
@@ -500,7 +545,52 @@ export const historyApi = {
     return db.prepare(query).all();
   }
 };
+// ===================================================================
+// --- SUPPLIERS API ---
+// ===================================================================
+export const suppliersApi = {
+  getAll: () => {
+    return db.prepare('SELECT * FROM suppliers ORDER BY name ASC').all();
+  },
+  
+  getById: (id: number) => {
+    return db.prepare('SELECT * FROM suppliers WHERE id = ?').get(id);
+  },
 
+  add: (data) => {
+    try {
+      const stmt = db.prepare(
+        'INSERT INTO suppliers (name, contactPerson, email, phone, address) VALUES (@name, @contactPerson, @email, @phone, @address)'
+      );
+      const info = stmt.run(data);
+      return { id: Number(info.lastInsertRowid) };
+    } catch (error: any) {
+      if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        throw new Error(`A supplier with the name "${data.name}" already exists.`);
+      }
+      throw error;
+    }
+  },
+
+  update: (data) => {
+    try {
+      const stmt = db.prepare(
+        'UPDATE suppliers SET name = @name, contactPerson = @contactPerson, email = @email, phone = @phone, address = @address WHERE id = @id'
+      );
+      stmt.run(data);
+    } catch (error: any) {
+      if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+        throw new Error(`A supplier with the name "${data.name}" already exists.`);
+      }
+      throw error;
+    }
+  },
+
+  delete: (id: number) => {
+    // We will add a check here later to prevent deleting a supplier with active POs.
+    return db.prepare('DELETE FROM suppliers WHERE id = ?').run(id);
+  }
+};
 // --- DASHBOARD API ---
 export const dashboardApi = {
   getStats: (): any => {

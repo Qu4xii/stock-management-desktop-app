@@ -15,6 +15,7 @@ import SignupPage from './pages/SignupPage'
 import DashboardPage from './pages/DashboardPage'
 import ClientsPage from './pages/ClientsPage'
 import ProductsPage from './pages/ProductsPage'
+import SuppliersPage from './pages/SuppliersPage'
 import StaffPage from './pages/StaffPage'
 import HistoryPage from './pages/HistoryPage'
 import RepairsPage from './pages/RepairsPage'
@@ -47,6 +48,7 @@ const router = createHashRouter([
           { index: true, element: <DashboardPage /> },
           { path: 'clients', element: <ClientsPage /> },
           { path: 'products', element: <ProductsPage /> },
+          { path: 'suppliers', element: <SuppliersPage /> },
           { path: 'staff', element: <StaffPage /> },
           { path: 'history', element: <HistoryPage /> },
           { path: 'repairs', element: <RepairsPage /> },

@@ -53,6 +53,13 @@ const dbApi: DBApi = {
   getTechnicianWorkOrdersByStatus: () => ipcRenderer.invoke('db:dashboard-getTechnicianWorkOrdersByStatus'),
   getActiveRepairsForStaff: () => ipcRenderer.invoke('db:dashboard-getActiveRepairsForStaff'),
   // ===================================================================
+  // --- SUPPLIER METHODS ---
+  // ===================================================================
+  getSuppliers: () => ipcRenderer.invoke('db:suppliers-getAll'),
+  addSupplier: (data) => ipcRenderer.invoke('db:suppliers-add', data),
+  updateSupplier: (data) => ipcRenderer.invoke('db:suppliers-update', data),
+  deleteSupplier: (id) => ipcRenderer.invoke('db:suppliers-delete', id),
+  // ===================================================================
   // --- INVENTORY DASHBOARD METHODS ---
   // ===================================================================
   getInventoryStats: () => ipcRenderer.invoke('db:dashboard-getInventoryStats'),

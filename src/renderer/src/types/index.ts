@@ -79,6 +79,15 @@ export interface InventoryStats {
   lowStockCount: number;
   outOfStockCount: number;
 }
+
+export interface Supplier {
+  id: number;
+  name: string;
+  contactPerson?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+}
 // --- API and Global Window Definitions ---
 
 /**
@@ -167,6 +176,12 @@ export interface DBApi {
     purchaseIds?: number[];
     repairIds?: number[];
   }) => Promise<{ success: boolean; message: string }>;
+
+  // --- SUPPLIER METHODS  ---
+  getSuppliers: () => Promise<Supplier[]>;
+  addSupplier: (data: Omit<Supplier, 'id'>) => Promise<Supplier>;
+  updateSupplier: (data: Supplier) => Promise<Supplier>;
+  deleteSupplier: (id: number) => Promise<void>;
 }
 
 export type RepairStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed'

@@ -15,7 +15,8 @@ import {
   repairsApi,
   historyApi,
   dashboardApi,
-  exportApi
+  exportApi,
+  suppliersApi
 } from './lib/db'
 import { StaffMember } from '../renderer/src/types' // [SECURITY] Import StaffMember for session typing
 import { hasPermission } from './lib/permissions' // [SECURITY] Import our permission checker
@@ -406,7 +407,43 @@ function registerIpcHandlers(): void {
     await staffApi.updatePassword(id, newPassword)
     return { success: true, message: 'Password updated successfully' }
   })
+  // ===================================================================
+  // --- SUPPLIERS IPC HANDLERS ---
+  // ===================================================================
+  ipcMain.handle('db:suppliers-getAll', protectedHandler('products:read', () => suppliersApi.getAll()));
+  
+  // CORRECTED: The handler now correctly expects 'data' as its first and only argument.
+  ipcMain.handle('db:suppliers-add', protectedHandler('products:create', async (data) => {
+    // The previous fix of creating a clean object is still a good practice.
+    const supplierData = {
+      name: data.name,
+      contactPerson: data.contactPerson,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+    };
+    
+    const record = await suppliersApi.add(supplierData);
+    return suppliersApi.getById(record.id);
+  }));
 
+  // CORRECTED: The 'update' handler is also fixed to expect 'data' as its first argument.
+  ipcMain.handle('db:suppliers-update', protectedHandler('products:update', async (data) => {
+    const supplierData = {
+      id: data.id,
+      name: data.name,
+      contactPerson: data.contactPerson,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+    };
+    
+    await suppliersApi.update(supplierData);
+    return suppliersApi.getById(data.id);
+  }));
+
+  // CORRECTED: The 'delete' handler expects 'id' as its first argument.
+  ipcMain.handle('db:suppliers-delete', protectedHandler('products:delete', (id) => suppliersApi.delete(id)));
 // =========================
 // EXPORT CLIENT REPORT HANDLER (FIXED VERSION)
 // =========================
