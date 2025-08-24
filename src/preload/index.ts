@@ -59,6 +59,12 @@ const dbApi: DBApi = {
   addSupplier: (data) => ipcRenderer.invoke('db:suppliers-add', data),
   updateSupplier: (data) => ipcRenderer.invoke('db:suppliers-update', data),
   deleteSupplier: (id) => ipcRenderer.invoke('db:suppliers-delete', id),
+  // --- PURCHASE ORDER METHODS ---
+  getPurchaseOrders: () => ipcRenderer.invoke('db:po-getAll'),
+  getPurchaseOrderById: (id) => ipcRenderer.invoke('db:po-getById', id),
+  createPurchaseOrder: (data) => ipcRenderer.invoke('db:po-create', data),
+  receivePurchaseOrder: (id) => ipcRenderer.invoke('db:po-receive', id),
+
   // ===================================================================
   // --- INVENTORY DASHBOARD METHODS ---
   // ===================================================================

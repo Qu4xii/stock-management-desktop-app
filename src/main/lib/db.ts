@@ -4,7 +4,7 @@ import path from 'path'
 import { app } from 'electron'
 import Database from 'better-sqlite3'
 import bcrypt from 'bcrypt';
-import { StaffMember, Repair, Client, Product } from '../../renderer/src/types'; // Import all necessary types
+import { StaffMember, Repair, Client, Product, PurchaseOrder, PurchaseOrderItem } from '../../renderer/src/types'; // Import all necessary types
 
 // --- DATABASE SETUP ---
 
@@ -585,13 +585,130 @@ export const suppliersApi = {
       throw error;
     }
   },
+  
+getPurchaseOrderCount: (supplierId: number) => {
+    const result = db.prepare(
+      'SELECT COUNT(*) as poCount FROM purchase_orders WHERE supplierId = ?'
+    ).get(supplierId) as { poCount: number };
+    return result.poCount;
+  },
+
 
   delete: (id: number) => {
     // We will add a check here later to prevent deleting a supplier with active POs.
     return db.prepare('DELETE FROM suppliers WHERE id = ?').run(id);
   }
 };
+// ===================================================================
+// --- PURCHASE ORDERS API ---
+// ===================================================================
+export const purchaseOrdersApi = {
+  // Get all POs with supplier name for display in a list
+  getAll: () => {
+    return db.prepare(`
+      SELECT po.id, po.status, po.orderDate, po.totalCost, s.name as supplierName
+      FROM purchase_orders po
+      JOIN suppliers s ON po.supplierId = s.id
+      ORDER BY po.orderDate DESC
+    `).all();
+  },
+
+  // Get a single PO with all its details
+  getById: (id: number) => {
+    const po = db.prepare(`
+      SELECT po.*, s.name as supplierName
+      FROM purchase_orders po
+      JOIN suppliers s ON po.supplierId = s.id
+      WHERE po.id = ?
+    `).get(id) as PurchaseOrder;
+
+    if (!po) return null;
+
+    // Get the line items for this PO
+    po.items = db.prepare(`
+      SELECT poi.*, p.name as productName
+      FROM purchase_order_items poi
+      JOIN products p ON poi.productId = p.id
+      WHERE poi.purchaseOrderId = ?
+    `).all(id) as PurchaseOrderItem[];
+
+    return po;
+  },
+
+  // Create a new PO and its line items in a single transaction
+  create: (data: { supplierId: number; items: any[] }) => {
+    const transaction = db.transaction(() => {
+      let totalCost = 0;
+      for (const item of data.items) {
+        totalCost += item.quantity * item.costPrice;
+      }
+
+      // 1. Create the main purchase order record
+      const poInfo = db.prepare(`
+        INSERT INTO purchase_orders (supplierId, orderDate, totalCost)
+        VALUES (?, ?, ?)
+      `).run(data.supplierId, new Date().toISOString(), totalCost);
+      const purchaseOrderId = poInfo.lastInsertRowid;
+
+      // 2. Create the line items associated with the new PO
+      const itemStmt = db.prepare(`
+        INSERT INTO purchase_order_items (purchaseOrderId, productId, quantity, costPrice)
+        VALUES (?, ?, ?, ?)
+      `);
+      for (const item of data.items) {
+        itemStmt.run(purchaseOrderId, item.productId, item.quantity, item.costPrice);
+      }
+      
+      return { id: Number(purchaseOrderId) };
+    });
+
+    return transaction();
+  },
+   receive: (purchaseOrderId: number) => {
+    const transaction = db.transaction(() => {
+      // 1. Verify the PO exists and is not already received
+      const po = db.prepare('SELECT * FROM purchase_orders WHERE id = ?').get(purchaseOrderId) as PurchaseOrder;
+
+      if (!po) {
+        throw new Error('Purchase Order not found.');
+      }
+      // Now TypeScript knows 'po' has a 'status' property.
+      if (po.status === 'Received') {
+        throw new Error('This order has already been received.');
+      }
+
+      // 2. Get all items associated with this PO
+      const items = db.prepare('SELECT * FROM purchase_order_items WHERE purchaseOrderId = ?').all(purchaseOrderId) as PurchaseOrderItem[];
+
+      if (items.length === 0) {
+        throw new Error('This purchase order has no items to receive.');
+      }
+
+      // 3. Prepare the statement to update product quantities
+      const updateStockStmt = db.prepare('UPDATE products SET quantity = quantity + ? WHERE id = ?');
+
+      // 4. Loop through each item, updating the stock for that product
+      for (const item of items) {
+        const result = updateStockStmt.run(item.quantity, item.productId);
+        if (result.changes === 0) {
+          // This is a safety check in case a product was deleted after the PO was created
+          console.warn(`Product with ID ${item.productId} not found. Could not update stock.`);
+        }
+      }
+      
+      // 5. Finally, update the status of the Purchase Order to 'Received'
+      db.prepare(`UPDATE purchase_orders SET status = 'Received' WHERE id = ?`).run(purchaseOrderId);
+
+      // Return the updated PO details
+      return purchaseOrdersApi.getById(purchaseOrderId);
+    });
+
+    return transaction();
+  },
+  };
+// ===================================================================
 // --- DASHBOARD API ---
+// ---
 export const dashboardApi = {
   getStats: (): any => {
     // Each query uses 'as' to name the result column for easy access.

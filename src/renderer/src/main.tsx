@@ -16,6 +16,9 @@ import DashboardPage from './pages/DashboardPage'
 import ClientsPage from './pages/ClientsPage'
 import ProductsPage from './pages/ProductsPage'
 import SuppliersPage from './pages/SuppliersPage'
+import PurchaseOrdersPage from './pages/PurchaseOrdersPage'
+import CreatePurchaseOrderPage from './pages/CreatePurchaseOrderPage'
+import PurchaseOrderDetailPage from './pages/PurchaseOrderDetailPage'
 import StaffPage from './pages/StaffPage'
 import HistoryPage from './pages/HistoryPage'
 import RepairsPage from './pages/RepairsPage'
@@ -49,6 +52,9 @@ const router = createHashRouter([
           { path: 'clients', element: <ClientsPage /> },
           { path: 'products', element: <ProductsPage /> },
           { path: 'suppliers', element: <SuppliersPage /> },
+          { path: 'purchase-orders', element: <PurchaseOrdersPage /> },
+          { path: 'purchase-orders/new', element: <CreatePurchaseOrderPage /> },
+          { path: 'purchase-orders/:poId', element: <PurchaseOrderDetailPage /> },
           { path: 'staff', element: <StaffPage /> },
           { path: 'history', element: <HistoryPage /> },
           { path: 'repairs', element: <RepairsPage /> },

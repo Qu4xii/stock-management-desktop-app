@@ -1,7 +1,7 @@
 // File: src/renderer/src/components/Sidebar.tsx
 
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Users, Package, Wrench, History, Clipboard, LogOut, Truck } from 'lucide-react'
+import { Home, Users, Package, Wrench, History, Clipboard, LogOut, Truck, ShoppingCart } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 // [PERMISSIONS] Step 1: Import our new usePermissions hook
 import { usePermissions } from '../hooks/usePermissions'
@@ -64,6 +64,12 @@ function Sidebar(): JSX.Element {
             <Link to="/suppliers" className={navLinkClasses('/suppliers')}>
               <Truck className="w-5 h-5 mr-3" />
               Suppliers
+            </Link>
+          )}
+          {can('products:read') && (
+            <Link to="/purchase-orders" className={navLinkClasses('/purchase-orders')}>
+              <ShoppingCart className="h-5 h-5 mr-3" /> {/* Or another icon you prefer */}
+              Purchase Orders
             </Link>
           )}
           {/* Staff is visible to Manager, Cashier, and Technician (self-only) */}

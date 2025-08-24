@@ -88,6 +88,28 @@ export interface Supplier {
   phone?: string;
   address?: string;
 }
+
+export type PurchaseOrderStatus = 'Pending' | 'Ordered' | 'Received' | 'Cancelled';
+
+export interface PurchaseOrderItem {
+  id: number;
+  purchaseOrderId: number;
+  productId: number;
+  productName?: string; // Joined from products table
+  quantity: number;
+  costPrice: number;
+}
+
+export interface PurchaseOrder {
+  id: number;
+  supplierId: number;
+  supplierName?: string; // Joined from suppliers table
+  status: PurchaseOrderStatus;
+  orderDate: string;
+  expectedDate?: string;
+  totalCost: number;
+  items: PurchaseOrderItem[];
+}
 // --- API and Global Window Definitions ---
 
 /**
@@ -182,6 +204,12 @@ export interface DBApi {
   addSupplier: (data: Omit<Supplier, 'id'>) => Promise<Supplier>;
   updateSupplier: (data: Supplier) => Promise<Supplier>;
   deleteSupplier: (id: number) => Promise<void>;
+
+  // --- PURCHASE ORDER METHODS ---
+  getPurchaseOrders: () => Promise<PurchaseOrder[]>;
+  getPurchaseOrderById: (id: number) => Promise<PurchaseOrder | null>;
+  createPurchaseOrder: (data: { supplierId: number; items: Omit<PurchaseOrderItem, 'id' | 'purchaseOrderId' | 'productName'>[] }) => Promise<{ id: number }>;
+  receivePurchaseOrder: (id: number) => Promise<PurchaseOrder>;
 }
 
 export type RepairStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed'

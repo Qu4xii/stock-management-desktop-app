@@ -16,7 +16,8 @@ import {
   historyApi,
   dashboardApi,
   exportApi,
-  suppliersApi
+  suppliersApi,
+  purchaseOrdersApi
 } from './lib/db'
 import { StaffMember } from '../renderer/src/types' // [SECURITY] Import StaffMember for session typing
 import { hasPermission } from './lib/permissions' // [SECURITY] Import our permission checker
@@ -441,9 +442,30 @@ function registerIpcHandlers(): void {
     await suppliersApi.update(supplierData);
     return suppliersApi.getById(data.id);
   }));
+  // ===================================================================
+  // --- PURCHASE ORDERS IPC HANDLERS ---
+  // ===================================================================
+  ipcMain.handle('db:po-getAll', protectedHandler('products:read', () => purchaseOrdersApi.getAll()));
+  
+  ipcMain.handle('db:po-getById', protectedHandler('products:read', (id) => purchaseOrdersApi.getById(id)));
 
-  // CORRECTED: The 'delete' handler expects 'id' as its first argument.
-  ipcMain.handle('db:suppliers-delete', protectedHandler('products:delete', (id) => suppliersApi.delete(id)));
+  ipcMain.handle('db:po-create', protectedHandler('products:create', (data) => purchaseOrdersApi.create(data)));
+  // delete supplier with PO check
+  // CORRECTED: The 'delete' handler is fixed to expect 'id' as its first argument.
+  ipcMain.handle('db:suppliers-delete', protectedHandler('products:delete', (id) => {
+    // 1. Check for associated purchase orders first.
+    const poCount = suppliersApi.getPurchaseOrderCount(id);
+
+    // 2. If there are associated POs, throw a user-friendly error.
+    if (poCount > 0) {
+      throw new Error(`Cannot delete this supplier. They are associated with ${poCount} purchase order(s). Please reassign or delete those orders first.`);
+    }
+
+    // 3. If the check passes, proceed with the deletion.
+    return suppliersApi.delete(id);
+  }));
+
+
 // =========================
 // EXPORT CLIENT REPORT HANDLER (FIXED VERSION)
 // =========================
