@@ -147,23 +147,50 @@ function registerIpcHandlers(): void {
   // =========================
   // PRODUCTS IPC HANDLERS (Now Protected)
   // =========================
-  ipcMain.handle('db:products-getAll', protectedHandler('products:read', () => productsApi.getAll()))
+ipcMain.handle('db:products-getAll', protectedHandler('products:read', async () => {
+    try {
+      // --- [DEBUG] Log that the handler was invoked ---
+      console.log('[IPC] Handling getProducts-getAll request...');
+      
+      const products = await productsApi.getAll();
+      
+      // --- [DEBUG] Log the result from the database ---
+      console.log(`[IPC] Found ${products.length} products in the database.`);
+      
+      return products;
+    } catch (error) {
+      console.error('[IPC Error] getProducts-getAll failed:', error);
+      throw error; // Propagate the error to the frontend
+    }
+  }))
 
-  ipcMain.handle(
-    'db:products-add',
-    protectedHandler('products:create', async (data) => {
-      const record = await productsApi.add(data)
-      return productsApi.getById(record.id)
+ipcMain.handle('db:products-add', protectedHandler('products:create', (data) => {
+      // Create a clean, explicit object to pass to the database
+      const productData = {
+        name: data.name,
+        quantity: data.quantity, // Should be 0 based on frontend logic
+        price: data.price,
+        supplierId: data.supplierId,
+        costPrice: data.costPrice,
+        sku: data.sku,
+      };
+      const record = productsApi.add(productData);
+      return productsApi.getById(record.id);
     })
   )
 
-  ipcMain.handle(
-    'db:products-update',
-    protectedHandler('products:update', async (data) => {
-      await productsApi.update(data)
-      return productsApi.getById(data.id)
+  // --- ALSO MODIFY THIS HANDLER ---
+ipcMain.handle('db:products-update', protectedHandler('products:update', (data) => {
+      // The 'data' object from the frontend is already a complete Product object.
+      // We can pass it directly to the API.
+      // The .run() method in db.ts will only use the properties it needs.
+      productsApi.update(data); 
+      return productsApi.getById(data.id);
     })
   )
+
+  ipcMain.handle('db:products-adjustStock', protectedHandler('products:update', (data) => productsApi.adjustStock(data)));
+  ipcMain.handle('db:po-receive', protectedHandler('products:update', (id) => purchaseOrdersApi.receive(id)));
 
   ipcMain.handle(
     'db:products-delete',

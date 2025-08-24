@@ -17,6 +17,10 @@ export interface Product {
   name: string
   quantity: number
   price: number
+  supplierId?: number | null
+  supplierName?: string | null
+  costPrice?: number | null
+  sku?: string | null
 }
 
 // Defines the specific roles a staff member can have.
@@ -127,6 +131,7 @@ export interface DBApi {
   getProducts: () => Promise<Product[]>
   addProduct: (productData: Omit<Product, 'id'>) => Promise<Product>
   updateProduct: (productData: Product) => Promise<Product>
+  adjustStock: (data: { productId: number; adjustment: number; reason: string; }) => Promise<Product>
   deleteProduct: (productId: number) => Promise<void>
 
   // Staff Methods

@@ -51,12 +51,18 @@ function Sidebar(): JSX.Element {
               Clients
             </Link>
           )}
-
-          {/* Products is visible to almost everyone for viewing */}
-          {can('products:read') && (
-            <Link to="/products" className={navLinkClasses('/products')}>
-              <Package className="w-5 h-5 mr-3" />
-              Products
+          {/* Staff is visible to Manager, Cashier, and Technician (self-only) */}
+          {(can('staff:read') || can('staff:read-self')) && (
+            <Link to="/staff" className={navLinkClasses('/staff')}>
+              <Clipboard className="w-5 h-5 mr-3" />
+              Staff
+            </Link>
+          )}
+                    {/* Repairs is visible to Manager, Cashier, and Technician */}
+          {(can('repairs:read') || can('repairs:read-assigned')) && (
+            <Link to="/repairs" className={navLinkClasses('/repairs')}>
+              <Wrench className="w-5 h-5 mr-3" />
+              Repairs
             </Link>
           )}
           {/* Suppliers is visible to Manager and Inventory Associate */}
@@ -66,20 +72,19 @@ function Sidebar(): JSX.Element {
               Suppliers
             </Link>
           )}
+                    {/* Products is visible to almost everyone for viewing */}
+          {can('products:read') && (
+            <Link to="/products" className={navLinkClasses('/products')}>
+              <Package className="w-5 h-5 mr-3" />
+              Products
+            </Link>
+          )}
           {can('products:read') && (
             <Link to="/purchase-orders" className={navLinkClasses('/purchase-orders')}>
               <ShoppingCart className="h-5 h-5 mr-3" /> {/* Or another icon you prefer */}
               Purchase Orders
             </Link>
           )}
-          {/* Staff is visible to Manager, Cashier, and Technician (self-only) */}
-          {(can('staff:read') || can('staff:read-self')) && (
-            <Link to="/staff" className={navLinkClasses('/staff')}>
-              <Clipboard className="w-5 h-5 mr-3" />
-              Staff
-            </Link>
-          )}
-
           {/* History is only visible to Manager and Cashier */}
           {can('history:read') && (
             <Link to="/history" className={navLinkClasses('/history')}>
@@ -88,13 +93,6 @@ function Sidebar(): JSX.Element {
             </Link>
           )}
 
-          {/* Repairs is visible to Manager, Cashier, and Technician */}
-          {(can('repairs:read') || can('repairs:read-assigned')) && (
-            <Link to="/repairs" className={navLinkClasses('/repairs')}>
-              <Wrench className="w-5 h-5 mr-3" />
-              Repairs
-            </Link>
-          )}
         </nav>
       </div>
 

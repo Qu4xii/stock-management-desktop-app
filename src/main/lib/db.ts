@@ -44,7 +44,11 @@ const createTables = (): void => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         quantity INTEGER DEFAULT 0,
-        price REAL NOT NULL
+        price REAL NOT NULL,
+        supplierId INTEGER,
+        costPrice REAL,
+        sku TEXT, -- New SKU field
+        FOREIGN KEY (supplierId) REFERENCES suppliers (id) ON DELETE SET NULL
       );
     `);
     
@@ -172,22 +176,59 @@ export const clientsApi = {
     db.prepare('DELETE FROM clients WHERE id = ?').run(id);
   },
 };
-
-// --- PRODUCTS API ---
+// ------------------------------
+// --- PRODUCTS API (EVOLVED) ---
+// ------------------------------
 export const productsApi = {
   getAll: (): Product[] => {
-    return db.prepare('SELECT * FROM products ORDER BY name ASC').all() as Product[];
+    // We now join with suppliers to get the supplier's name
+    return db.prepare(`
+      SELECT p.*, s.name as supplierName 
+      FROM products p
+      LEFT JOIN suppliers s ON p.supplierId = s.id
+      ORDER BY p.name ASC
+    `).all() as Product[];
   },
-  add: (productData: Omit<Product, 'id'>): { id: number } => {
-    const info = db.prepare('INSERT INTO products (name, quantity, price) VALUES (@name, @quantity, @price)').run(productData);
+
+  getById: (id: number): Product => {
+    return db.prepare(`
+      SELECT p.*, s.name as supplierName 
+      FROM products p
+      LEFT JOIN suppliers s ON p.supplierId = s.id
+      WHERE p.id = ?
+    `).get(id) as Product;
+  },
+
+  // Modified to include new fields
+  add: (productData: Omit<Product, 'id' | 'supplierName'>): { id: number } => {
+    const info = db.prepare(
+      'INSERT INTO products (name, quantity, price, supplierId, costPrice, sku) VALUES (@name, @quantity, @price, @supplierId, @costPrice, @sku)'
+    ).run(productData);
     return { id: Number(info.lastInsertRowid) };
   },
-  getById: (id: number): Product => {
-    return db.prepare('SELECT * FROM products WHERE id = ?').get(id) as Product;
-  },
+
+  // Modified to include new fields
   update: (productData: Product): void => {
-    db.prepare('UPDATE products SET name = @name, quantity = @quantity, price = @price WHERE id = @id').run(productData);
+    // IMPORTANT: We explicitly DO NOT update the 'quantity' here.
+    // That is now handled by receiving POs or stock adjustments.
+    db.prepare(
+      'UPDATE products SET name = @name, price = @price, supplierId = @supplierId, costPrice = @costPrice, sku = @sku WHERE id = @id'
+    ).run(productData);
   },
+  
+  // --- NEW FUNCTION for manual, audited stock changes ---
+  adjustStock: ({ productId, adjustment, reason }: { productId: number; adjustment: number; reason: string }) => {
+    // We will log the 'reason' later when we build the audit trail. For now, it's just a required parameter.
+    if (!reason) {
+      throw new Error('A reason is required for all manual stock adjustments.');
+    }
+    const result = db.prepare('UPDATE products SET quantity = quantity + ? WHERE id = ?').run(adjustment, productId);
+    if (result.changes === 0) {
+      throw new Error('Product not found.');
+    }
+    return productsApi.getById(productId);
+  },
+
   delete: (id: number): void => {
     db.prepare('DELETE FROM products WHERE id = ?').run(id);
   },
@@ -708,7 +749,7 @@ export const purchaseOrdersApi = {
   };
 // ===================================================================
 // --- DASHBOARD API ---
-// ---
+// --- 
 export const dashboardApi = {
   getStats: (): any => {
     // Each query uses 'as' to name the result column for easy access.

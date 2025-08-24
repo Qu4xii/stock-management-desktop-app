@@ -15,6 +15,7 @@ const dbApi: DBApi = {
   getProducts: () => ipcRenderer.invoke('db:products-getAll'),
   addProduct: (productData) => ipcRenderer.invoke('db:products-add', productData),
   updateProduct: (productData) => ipcRenderer.invoke('db:products-update', productData),
+  adjustStock: (data) => ipcRenderer.invoke('db:products-adjustStock', data),
   deleteProduct: (productId) => ipcRenderer.invoke('db:products-delete', productId),
 
   // --- STAFF METHODS ---
