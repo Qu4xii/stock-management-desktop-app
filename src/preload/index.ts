@@ -20,6 +20,7 @@ const dbApi: DBApi = {
 
   // --- STAFF METHODS ---
   getStaff: () => ipcRenderer.invoke('db:staff-getAll'),
+  getTechnicians: () => ipcRenderer.invoke('db:staff-getTechnicians'),
   addStaff: (staffData) => ipcRenderer.invoke('db:staff-add', staffData),
   updateStaff: (staffData) => ipcRenderer.invoke('db:staff-update', staffData),
   deleteStaff: (staffId) => ipcRenderer.invoke('db:staff-delete', staffId),

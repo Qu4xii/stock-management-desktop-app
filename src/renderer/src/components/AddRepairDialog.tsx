@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label'; // Import Label component
 import { Client, StaffMember, Repair, RepairStatus, RepairPriority } from '../types';
+import { usePermissions } from '../hooks/usePermissions';
 
 interface AddRepairDialogProps {
   children: React.ReactNode; // The "+ New Work Order" button
@@ -21,6 +22,7 @@ function AddRepairDialog({ children, onRepairAdded }: AddRepairDialogProps): JSX
   const [isOpen, setIsOpen] = useState(false);
   
   // State for all the form fields, initialized to default values
+  const { role } = usePermissions();
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<RepairStatus>('Not Started');
   const [priority, setPriority] = useState<RepairPriority>('Medium');
@@ -31,22 +33,44 @@ function AddRepairDialog({ children, onRepairAdded }: AddRepairDialogProps): JSX
 
   // State to hold the lists of clients and staff for the dropdowns
   const [clients, setClients] = useState<Client[]>([]);
-  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [assignableStaff, setAssignableStaff] = useState<StaffMember[]>([]);
+  
 
   // This effect runs once when the component mounts to fetch data for the dropdowns
   useEffect(() => {
+    // This async function will now fetch the correct list of staff.
     const fetchDataForDropdowns = async () => {
       try {
+        // Fetch clients (this is always needed)
         const clientsData = await window.db.getClients();
-        const staffData = await window.db.getStaff();
         setClients(clientsData);
-        setStaff(staffData);
+
+        // ** THE NEW LOGIC **
+        // Decide which staff list to fetch based on the user's role.
+        let staffToAssign;
+        if (role === 'Manager') {
+          // Managers can see everyone.
+          staffToAssign = await window.db.getStaff();
+        } else if (role === 'Cashier') {
+          // Cashiers can only see Technicians.
+          staffToAssign = await window.db.getTechnicians();
+        } else {
+          // Default to an empty list for any other role.
+          staffToAssign = [];
+        }
+        setAssignableStaff(staffToAssign);
+
       } catch (error) {
         console.error("Failed to fetch data for dialog dropdowns:", error);
       }
     };
-    fetchDataForDropdowns();
-  }, []);
+
+    // Only fetch data if the dialog is opened and the role has been identified.
+    // This prevents unnecessary API calls when the component first loads.
+    if (isOpen && role) {
+      fetchDataForDropdowns();
+    }
+  }, [isOpen, role]); // The effect now re-runs if `isOpen` or `role` changes.
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -54,20 +78,18 @@ function AddRepairDialog({ children, onRepairAdded }: AddRepairDialogProps): JSX
       alert('You must select a client.');
       return;
     }
-
     onRepairAdded({
       description,
       status,
       priority,
-      requestDate: new Date().toISOString(), // Set request date to now
-      dueDate: new Date(dueDate).toISOString(),
+      requestDate: new Date().toISOString(),
+      dueDate: dueDate ? new Date(dueDate).toISOString() : '', // Handle empty date
       totalPrice,
       clientId,
       staffId: staffId || null,
     });
-
-    // Close the dialog and reset the form
     setIsOpen(false);
+    // Reset all form fields after submission
     setDescription('');
     setStatus('Not Started');
     setPriority('Medium');
@@ -144,15 +166,16 @@ function AddRepairDialog({ children, onRepairAdded }: AddRepairDialogProps): JSX
           </div>
 
           <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="repair-technician">Assign to Technician</Label>
+<Label htmlFor="repair-staff">Assign to Staff</Label>
             <Select value={staffId ? String(staffId) : "0"} onValueChange={(v) => setStaffId(Number(v) || undefined)}>
-              <SelectTrigger id="repair-technician">
-                <SelectValue placeholder="Select a technician..." />
+              <SelectTrigger id="repair-staff">
+                <SelectValue placeholder={role === 'Manager' ? "Select any staff member..." : "Select a technician..."} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="0">Unassigned</SelectItem>
-                {staff.map(s => (
-                  <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                {/* Map over the new 'assignableStaff' state variable */}
+                {assignableStaff.map(s => (
+                  <SelectItem key={s.id} value={String(s.id)}>{s.name} ({s.role})</SelectItem>
                 ))}
               </SelectContent>
             </Select>

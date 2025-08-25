@@ -204,7 +204,6 @@ ipcMain.handle('db:products-update', protectedHandler('products:update', (data) 
   ipcMain.handle('db:staff-getAll', async (event) => {
     const user = getUserFromEvent(event)
     if (!user) throw new Error('Authentication Required.')
-    
     // Managers and Cashiers can see everyone
     if (hasPermission(user.role, 'staff:read')) {
       return staffApi.getAll()
@@ -216,7 +215,8 @@ ipcMain.handle('db:products-update', protectedHandler('products:update', (data) 
     }
     throw new Error('Unauthorized')
   })
-
+    // New handler to get only Technicians for assignment dropdowns
+    ipcMain.handle('db:staff-getTechnicians', protectedHandler('repairs:create', () => staffApi.getTechnicians()));
   ipcMain.handle(
     'db:staff-add',
     protectedHandler('staff:create', (data) => staffApi.add(data))

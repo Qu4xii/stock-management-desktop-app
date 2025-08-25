@@ -136,8 +136,9 @@ export interface DBApi {
 
   // Staff Methods
   getStaff: () => Promise<StaffMember[]>
+  getTechnicians: () => Promise<StaffMember[]>
   addStaff: (
-    staffData: Omit<StaffMember, 'id' | 'picture'> & { password: string }
+  staffData: Omit<StaffMember, 'id' | 'picture'> & { password: string }
   ) => Promise<StaffMember>
   updateStaff: (staffData: StaffMember) => Promise<StaffMember>
   deleteStaff: (staffId: number) => Promise<void>

@@ -240,7 +240,11 @@ export const staffApi = {
     const staffMembers = db.prepare('SELECT * FROM staff ORDER BY name ASC').all() as any[];
     return staffMembers.map(member => ({ ...member, isAvailable: member.isAvailable === 1 }));
   },
-  
+  getTechnicians: (): StaffMember[] => {
+    const technicians = db.prepare("SELECT * FROM staff WHERE role = 'Technician' ORDER BY name ASC").all() as any[];
+    // Ensure the boolean conversion is consistent with getAll()
+    return technicians.map(member => ({ ...member, isAvailable: member.isAvailable === 1 }));
+  },
   // This add function is for creating staff from the Staff page, not for signup.
   add: async (staffData: Omit<StaffMember, 'id' | 'picture'> & { password: string }): Promise<StaffMember> => {
     const saltRounds = 10;
