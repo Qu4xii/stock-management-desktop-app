@@ -1,4 +1,4 @@
-// File: src/renderer/src/pages/ProductsPage.tsx (Improved Version)
+// File: src/renderer/src/pages/ProductsPage.tsx (Updated Version)
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { PlusCircle, MoreHorizontal, Pen, Trash2, SlidersHorizontal, Search, X } from 'lucide-react'
@@ -197,102 +197,118 @@ function ProductsPage(): JSX.Element {
     return { label: 'In Stock', variant: 'default' as const }
   }
 
-  const columns = useMemo(() => [
-    { 
-      accessorKey: 'name', 
-      header: 'Name',
-      cell: ({ row }) => {
-        const product = row.original as Product
-        return (
-          <div className="font-medium">
-            {product.name}
-            {product.sku && <div className="text-sm text-muted-foreground">{product.sku}</div>}
-          </div>
-        )
-      }
-    },
-    { accessorKey: 'supplierName', header: 'Supplier' },
-    { 
-      accessorKey: 'quantity', 
-      header: 'Stock',
-      cell: ({ row }) => {
-        const product = row.original as Product
-        const status = getStockStatus(product.quantity)
-        return (
-          <div className="flex items-center gap-2">
-            <span>{product.quantity}</span>
-            <Badge variant={status.variant} className="text-xs">
-              {status.label}
-            </Badge>
-          </div>
-        )
-      }
-    },
-    { 
-      accessorKey: 'price', 
-      header: 'Sale Price',
-      cell: ({ row }) => `$${(row.original as Product).price?.toFixed(2) || '0.00'}`
-    },
-    { 
-      accessorKey: 'costPrice', 
-      header: 'Cost Price',
-      cell: ({ row }) => {
-        const costPrice = (row.original as Product).costPrice
-        return costPrice ? `$${costPrice.toFixed(2)}` : 'N/A'
-      }
-    },
-    {
-      id: 'margin',
-      header: 'Margin',
-      cell: ({ row }) => {
-        const product = row.original as Product
-        if (!product.price || !product.costPrice) return 'N/A'
-        const margin = ((product.price - product.costPrice) / product.price) * 100
-        return `${margin.toFixed(1)}%`
-      }
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => {
-        const product = row.original as Product
-        const canEdit = can('products:update')
-        const canDelete = can('products:delete')
+  // Check if user has any product management permissions
+  const hasProductManagementPermissions = can('products:update') || can('products:delete')
 
-        return (
-          <div className="text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {canEdit && (
-                  <DropdownMenuItem onClick={() => handleOpenProductDialog(product)}>
-                    <Pen className="mr-2 h-4 w-4" />Edit Details
-                  </DropdownMenuItem>
-                )}
-                {canEdit && (
-                  <DropdownMenuItem onClick={() => handleOpenAdjustDialog(product)}>
-                    <SlidersHorizontal className="mr-2 h-4 w-4" />Adjust Stock
-                  </DropdownMenuItem>
-                )}
-                {canDelete && (
-                  <DropdownMenuItem 
-                    className="text-red-600" 
-                    onClick={() => handleDeleteProduct(product.id)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />Delete
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )
+  const columns = useMemo(() => {
+    const baseColumns: Array<{
+      accessorKey?: string
+      id?: string
+      header: string
+      cell?: ({ row }: { row: { original: Product } }) => React.ReactNode
+    }> = [
+      { 
+        accessorKey: 'name', 
+        header: 'Name',
+        cell: ({ row }) => {
+          const product = row.original as Product
+          return (
+            <div className="font-medium">
+              {product.name}
+              {product.sku && <div className="text-sm text-muted-foreground">{product.sku}</div>}
+            </div>
+          )
+        }
+      },
+      { accessorKey: 'supplierName', header: 'Supplier' },
+      { 
+        accessorKey: 'quantity', 
+        header: 'Stock',
+        cell: ({ row }) => {
+          const product = row.original as Product
+          const status = getStockStatus(product.quantity)
+          return (
+            <div className="flex items-center gap-2">
+              <span>{product.quantity}</span>
+              <Badge variant={status.variant} className="text-xs">
+                {status.label}
+              </Badge>
+            </div>
+          )
+        }
+      },
+      { 
+        accessorKey: 'price', 
+        header: 'Sale Price',
+        cell: ({ row }) => `$${(row.original as Product).price?.toFixed(2) || '0.00'}`
+      },
+      { 
+        accessorKey: 'costPrice', 
+        header: 'Cost Price',
+        cell: ({ row }) => {
+          const costPrice = (row.original as Product).costPrice
+          return costPrice ? `$${costPrice.toFixed(2)}` : 'N/A'
+        }
+      },
+      {
+        id: 'margin',
+        header: 'Margin',
+        cell: ({ row }) => {
+          const product = row.original as Product
+          if (!product.price || !product.costPrice) return 'N/A'
+          const margin = ((product.price - product.costPrice) / product.price) * 100
+          return `${margin.toFixed(1)}%`
+        }
       }
+    ]
+
+    // Only add actions column if user has management permissions
+    if (hasProductManagementPermissions) {
+      baseColumns.push({
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }: { row: { original: Product } }) => {
+          const product = row.original as Product
+          const canEdit = can('products:update')
+          const canDelete = can('products:delete')
+
+          return (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {canEdit && (
+                    <DropdownMenuItem onClick={() => handleOpenProductDialog(product)}>
+                      <Pen className="mr-2 h-4 w-4" />Edit Details
+                    </DropdownMenuItem>
+                  )}
+                  {canEdit && (
+                    <DropdownMenuItem onClick={() => handleOpenAdjustDialog(product)}>
+                      <SlidersHorizontal className="mr-2 h-4 w-4" />Adjust Stock
+                    </DropdownMenuItem>
+                  )}
+                  {canDelete && (
+                    <DropdownMenuItem 
+                      className="text-red-600" 
+                      onClick={() => handleDeleteProduct(product.id)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )
+        }
+      })
     }
-  ], [can, handleOpenProductDialog, handleOpenAdjustDialog])
+
+    return baseColumns
+  }, [can, handleOpenProductDialog, handleOpenAdjustDialog, hasProductManagementPermissions])
 
   if (isLoading) {
     return (

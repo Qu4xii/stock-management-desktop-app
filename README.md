@@ -1,112 +1,90 @@
-# electron-react-shadcn
+#  Invento - Stock and repair Tracker - Desktop Management System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Required Node.JS >= 18.0.0](https://img.shields.io/static/v1?label=node&message=%20%3E=18.0.0&logo=node.js&color=3f893e)](https://nodejs.org/en/download/package-manager)
 
-
 ## Overview
 
-This Electron boilerplate enables developers to quickly build cross-platform apps using Electron, Vite, and React with Shadcn UI. Based on [@alex8088](https://github.com/alex8088)’s awesome `npm create @quick-start/electron` package, this template includes added styling (Tailwind, Shadcn UI) and testing libraries (Jest, Testing Library) to streamline setup and save development time.
+StockApp is a comprehensive, cross-platform desktop application designed to manage inventory, client repairs, and staff roles for a small to medium-sized service or retail business. Built with a secure, modern technology stack, it provides a robust solution for tracking the entire lifecycle of products and work orders.
+
+The application features a sophisticated role-based access control system, ensuring that staff members can only see and interact with the data relevant to their specific job function.
+
+### Core Features
+
+*   **Role-Based Access Control (RBAC):** A secure, backend-enforced permission system with five distinct roles (Manager, Technician, Inventory Associate, Cashier, Not Assigned). The UI dynamically adapts to each user's permissions.
+*   **Inventory Management:** Full CRUD (Create, Read, Update, Delete) functionality for products. Product quantities are automatically updated through a formal procurement system.
+*   **Repair/Work Order Tracking:** A complete system for creating, assigning, and managing the status of client repair jobs from start to finish.
+*   **Supplier & Purchase Order System:** A full procurement workflow to manage suppliers and create purchase orders. Stock levels are automatically increased when an order is marked as "Received."
+*   **Client & Staff Management:** Centralized modules for managing customer and employee information, including role assignments for staff.
+*   **Role-Specific Dashboards:** Dynamic dashboard views tailored to each role, providing managers with high-level business KPIs, technicians with their personal workload, and inventory associates with stock-level alerts.
 
 ### Tech Stack
 
-| Category                  | Technology                                                                                  |
-|---------------------------|---------------------------------------------------------------------------------------------|
-| **Software Framework**    | [Electron](https://www.electronjs.org/)                                                     |
-| **Frontend Library**      | [React](https://react.dev/)                                                                 |
-| **Build Tool**            | [Vite](https://vite.dev/), [Electron-Vite](https://electron-vite.org/)                                                                   |
-| **UI and Styling**        | [shadcn](https://ui.shadcn.com/), [Tailwind](https://tailwindcss.com/)                      |
-| **Testing**               | [Vitest](https://vitest.dev), [Testing Library](https://testing-library.com/)                 |
+| Category               | Technology                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| **Software Framework** | [Electron](https://www.electronjs.org/)                                        |
+| **Frontend Library**   | [React](https://react.dev/)                                                    |
+| **Database**           | [SQLite](https://www.sqlite.org/index.html) via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) |
+| **Build Tool**         | [Vite](https://vite.dev/), [Electron-Vite](https://electron-vite.org/)          |
+| **UI and Styling**     | [shadcn/ui](https://ui.shadcn.com/), [Tailwind CSS](https://tailwindcss.com/)   |
 
-## Quick Start
 
-### Option 1 (Recommended): Use `npx electron-react-shadcn` to create a new project.
+## Getting Started
 
-You can use this command to create a new project with this boilerplate directly in the directory. You can also setup and project name and theme colors by following the command prompts.
-
-```bash
-# create a new project using this boilerplate
-npx electron-react-shadcn
-
-# navigate to the project folder
-cd electron-react-shadcn
-
-# install dependencies and run the project in dev mode
-npm install && npm run dev
-```
-
-### Option 2: Clone this repository directly
-
-You can use this boilerplate by directly downloading or clone this repository, and install the dependencies.
+To set up the project for development, clone the repository and install the dependencies.
 
 ```bash
-# clone this project
-git clone https://github.com/terrence-ou/electron-react-shadcn.git
+# Clone this project
+git clone <your-repository-url-here>
 
-# navigate to the project folder
-cd electron-react-shadcn
+# Navigate to the project folder
+cd StockApp
 
-# you can choose to remove the git info from this repo to avoid potential git conflicts
-sudo rm -r .git
-
-# install dependencies
+# Install dependencies
 npm install
 
-# start the project in dev mode
+# Start the project in development mode
 npm run dev
-```
-
 
 ### Test and build commands
 
-There're some pre-defined commands you might find useful
+# Build for macOS
+npm run build:mac
 
-```bash
-# run unit test
-npm run test
+# Build for Windows
+npm run build:win
 
-# run test coverage
-npm run coverage
-
-# build app for different platforms
-npm run build:mac # build for mac
-npm run build:win # build for windows
-npm run build:linux # build for linux
-```
+# Build for Linux
+npm run build:linux
 
 ## Project Structure
 ```
-├── resources/                      # Additional resources for the app
+├── resources/                      # Application icon and other static assets
 ├── src/                            # Main source code
-│   ├── main/                       # Main process code
-│   │   ├── lib/                    # Libraries for main process logic
-│   │   └── index.ts                # Entry point for the main process
-│   ├── preload/                    # Preload scripts
-│   │   ├── index.ts                # Preload script entry point
-│   │   └── index.d.ts              # TypeScript declarations for preload
-│   ├── renderer/                   # Renderer process code (front-end)
-│   │   ├── src/                    # Source for renderer
-│   │   │   ├── __tests__/          # Tests for renderer components
-│   │   │   ├── assets/             # Assets for the renderer
-│   │   │   ├── components/         # React components
-│   │   │   │   └── ui/             # Shadcn UI components
-│   │   │   └── utils/              # Utility functions
-│   │   ├── App.tsx                 # Main application component
-│   │   ├── env.d.ts                # TypeScript environment declarations
-│   │   ├── main.tsx                # Main entry point for the renderer
-│   │   └── index.html              # HTML template for the renderer
-│   └── shared/                     # Shared code between main and renderer
+│   ├── main/                       # Main process code (Node.js Backend)
+│   │   ├── lib/                    # Core backend libraries
+│   │   │   ├── db.ts               # --- All SQLite database queries and API modules
+│   │   │   └── permissions.ts      # --- Defines the Role-Based Access Control matrix
+│   │   └── index.ts                # --- Entry point for the main process and all IPC handlers
+│   ├── preload/                    # Preload scripts (Secure Bridge)
+│   │   └── index.ts                # --- Exposes secure backend functions to the frontend via contextBridge
+│   ├── renderer/                   # Renderer process code (React Frontend)
+│   │   ├── src/                    
+│   │   │   ├── components/         # Reusable React components
+│   │   │   │   ├── dashboards/     # --- Role-specific dashboard components
+│   │   │   │   ├── dialogs/        # --- Add/Edit/View dialog components
+│   │   │   │   └── ui/             # --- Shadcn UI components
+│   │   │   ├── contexts/           # --- React Contexts (e.g., AuthContext)
+│   │   │   ├── hooks/              # --- Custom hooks (e.g., usePermissions)
+│   │   │   ├── pages/              # --- Main page components for each feature
+│   │   │   ├── types/              # --- All TypeScript type definitions (single source of truth)
+│   │   │   └── App.tsx             # --- Main application component with the router
+│   │   ├── main.tsx                # --- Entry point for the React application
+│   │   └── index.html              # --- HTML template (contains the app title)
 ├── .gitignore                      # Git ignore patterns
 ├── components.json                 # Shadcn Components configuration
 ├── electron.vite.config.ts         # Vite configuration for Electron
-├── vite.config.mjs                 # Vitest testing configuration
-├── LICENSE                         # Project license
 ├── package.json                    # Project metadata and dependencies
-├── package-lock.json               # Dependency lock file
-├── postcss.config.js               # PostCSS configuration
-├── README.md                       # Project documentation
-├── tailwind.config.js              # Tailwind CSS configuration
-├── tsconfig.json                   # TypeScript configuration (general)
-├── tsconfig.node.json              # TypeScript configuration for Node.js
-└── tsconfig.web.json               # TypeScript configuration for web
+├── README.md                       # This file
+└── tsconfig.json                   # Main TypeScript configuration
 ```

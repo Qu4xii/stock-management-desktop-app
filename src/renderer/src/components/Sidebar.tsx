@@ -30,8 +30,8 @@ function Sidebar(): JSX.Element {
     <aside className="w-64 bg-muted p-4 flex flex-col flex-shrink-0">
       <div>
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold text-foreground">Stock and Repair Tracker</h2>
-          <p className="text-sm text-muted-foreground">by Mohamed ahmed miled</p>
+          <h2 className="text-2xl font-bold text-foreground">Invento</h2>
+          <p className="text-sm text-muted-foreground">Stock and Repair Tracker</p>
         </div>
         <nav className="flex flex-col space-y-2">
           {/* [PERMISSIONS] Step 3: Wrap each link in a permission check */}

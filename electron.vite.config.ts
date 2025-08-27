@@ -5,16 +5,25 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
+    build: {
+      lib: {
+        entry: resolve(__dirname, 'src/main/index.ts'), // TypeScript entry point
+      }
+    },
     resolve: {
       alias: {
         "@/lib": resolve("src/main/lib"),
         "@/shared": resolve("src/shared"),
-        
       },
     },
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
+    build: {
+      lib: {
+        entry: resolve(__dirname, 'src/preload/index.ts'), // TypeScript entry point
+      }
+    },
   },
   renderer: {
     resolve: {
@@ -24,10 +33,8 @@ export default defineConfig({
         "@renderer": resolve("src/renderer/src"),
         "@shared": resolve("src/shared"),
         "@/components": resolve("src/renderer/src/components"),
-        
         "@/hooks": resolve("src/renderer/src/hooks"),
         '@types': resolve('src/renderer/src/types'),
-        
       },
     },
     plugins: [react()],

@@ -21,6 +21,7 @@ import {
 } from './lib/db'
 import { StaffMember } from '../renderer/src/types' // [SECURITY] Import StaffMember for session typing
 import { hasPermission } from './lib/permissions' // [SECURITY] Import our permission checker
+console.log('Cache folder is located at:', app.getPath('userData'))
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message
   if (typeof error === 'string') return error
@@ -32,7 +33,7 @@ const PDFDocument = require('pdfkit-table')
 // This Map will store the authenticated user for each application window.
 // Key: window.id (number), Value: StaffMember object
 const userSessions = new Map<number, StaffMember>()
-
+console.log('Resolved icon path:', icon);
 function registerIpcHandlers(): void {
   // [SECURITY] Step 2: Helper to get the user associated with an IPC event
   const getUserFromEvent = (event: IpcMainInvokeEvent): StaffMember | undefined => {

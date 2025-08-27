@@ -68,7 +68,7 @@ const router = createHashRouter([
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <AuthProvider>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-react-electron-theme">
+      <ThemeProvider defaultTheme="light" storageKey="vite-react-electron-theme">
         <RouterProvider router={router} />
       </ThemeProvider>
     </AuthProvider>
