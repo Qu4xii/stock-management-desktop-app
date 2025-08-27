@@ -66,7 +66,7 @@ function Sidebar(): JSX.Element {
             </Link>
           )}
           {/* Suppliers is visible to Manager and Inventory Associate */}
-          {can('products:read') && (
+          {can('suppliers:read') && (
             <Link to="/suppliers" className={navLinkClasses('/suppliers')}>
               <Truck className="w-5 h-5 mr-3" />
               Suppliers
@@ -79,9 +79,9 @@ function Sidebar(): JSX.Element {
               Products
             </Link>
           )}
-          {can('products:read') && (
+          {can('purchase-orders:read') && (
             <Link to="/purchase-orders" className={navLinkClasses('/purchase-orders')}>
-              <ShoppingCart className="h-5 h-5 mr-3" /> {/* Or another icon you prefer */}
+              <ShoppingCart className="h-5 h-5 mr-3" />
               Purchase Orders
             </Link>
           )}

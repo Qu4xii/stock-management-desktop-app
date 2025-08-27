@@ -730,6 +730,7 @@ function createWindow(): void {
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron');
   registerIpcHandlers();
+  console.log('User Data Path:', app.getPath('userData'));
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });

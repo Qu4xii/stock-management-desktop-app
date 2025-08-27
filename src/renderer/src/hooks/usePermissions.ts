@@ -14,7 +14,6 @@ const permissions: Record<StaffRole, string[]> = {
   // Technician has limited, specific access.
   Technician: [
     'clients:read',
-    'products:read',
     'staff:read-self',
     'repairs:create',
     'repairs:read-assigned',
@@ -23,11 +22,18 @@ const permissions: Record<StaffRole, string[]> = {
   ],
 
   // Inventory Associate manages products.
-  'Inventory Associate': [
+ 'Inventory Associate': [
     'products:create',
     'products:read',
     'products:update',
     'products:delete',
+    'suppliers:read',
+    'suppliers:create',
+    'suppliers:update',
+    'suppliers:delete',
+    'purchase-orders:read',
+    'purchase-orders:create',
+    'purchase-orders:update',
     'dashboard:read-limited'
   ],
 
