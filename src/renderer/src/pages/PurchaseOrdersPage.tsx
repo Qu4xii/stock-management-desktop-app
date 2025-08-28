@@ -1,6 +1,6 @@
 // File: src/renderer/src/pages/PurchaseOrdersPage.tsx
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { PlusCircle } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import {

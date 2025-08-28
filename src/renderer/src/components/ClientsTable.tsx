@@ -1,6 +1,5 @@
 // File: src/renderer/src/components/ClientsTable.tsx
 
-import React from 'react'
 import { Client } from '../types'
 import { Card } from './ui/card'
 import { Button } from './ui/button'
@@ -65,13 +64,14 @@ function ClientsTable({
             <TableHead>Name & Email</TableHead>
             <TableHead>ID Card</TableHead>
             <TableHead>Phone</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            {/* [PERMISSIONS] Only show Actions column if user has any actionable permissions */}
+            {canPerformAnyAction && <TableHead className="text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {clients.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+              <TableCell colSpan={canPerformAnyAction ? 5 : 4} className="h-24 text-center text-muted-foreground">
                 No clients found.
               </TableCell>
             </TableRow>
@@ -90,64 +90,66 @@ function ClientsTable({
                 </TableCell>
                 <TableCell>{client.idCard}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{client.phone}</TableCell>
-                <TableCell className="text-right">
-                  {/* [PERMISSIONS] Step 4: Conditionally render the actions */}
-                  <div className="flex items-center justify-end gap-2">
-                    {/* Show "New Purchase" button only if user has permission */}
-                    {can('clients:create-purchase') && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onNewPurchase(client)}
-                        className="h-8"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Purchase
-                      </Button>
-                    )}
-
-                    {/* The dropdown menu is now also conditional */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
+                {/* [PERMISSIONS] Step 4: Conditionally render the actions column */}
+                {canPerformAnyAction && (
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {/* Show "New Purchase" button only if user has permission */}
+                      {can('clients:create-purchase') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onNewPurchase(client)}
+                          className="h-8"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Purchase
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        {/* View is always available for anyone who can see the table */}
-                        <DropdownMenuItem onClick={() => onView(client)}>
-                          View Details
-                        </DropdownMenuItem>
+                      )}
 
-                        {/* Show "Edit" only if user has permission */}
-                        {can('clients:update') && (
-                          <DropdownMenuItem onClick={() => onEdit(client)}>Edit</DropdownMenuItem>
-                        )}
+                      {/* The dropdown menu is now also conditional */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          {/* View is always available for anyone who can see the table */}
+                          <DropdownMenuItem onClick={() => onView(client)}>
+                            View Details
+                          </DropdownMenuItem>
 
-                        {/* Show "Delete" only if user has permission */}
-                        {can('clients:delete') && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => {
-                                if (
-                                  window.confirm(`Are you sure you want to delete "${client.name}"?`)
-                                ) {
-                                  onDelete(client.id)
-                                }
-                              }}
-                              className="text-red-500 focus:text-red-500"
-                            >
-                              Delete
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </TableCell>
+                          {/* Show "Edit" only if user has permission */}
+                          {can('clients:update') && (
+                            <DropdownMenuItem onClick={() => onEdit(client)}>Edit</DropdownMenuItem>
+                          )}
+
+                          {/* Show "Delete" only if user has permission */}
+                          {can('clients:delete') && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  if (
+                                    window.confirm(`Are you sure you want to delete "${client.name}"?`)
+                                  ) {
+                                    onDelete(client.id)
+                                  }
+                                }}
+                                className="text-red-500 focus:text-red-500"
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))
           )}

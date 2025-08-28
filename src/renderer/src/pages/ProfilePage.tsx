@@ -1,5 +1,4 @@
 // src/renderer/src/pages/ProfilePage.tsx
-import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Label } from '../components/ui/label';

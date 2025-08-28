@@ -1,6 +1,6 @@
 // File: src/renderer/src/pages/SuppliersPage.tsx
 
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PlusCircle, MoreHorizontal, Pen, Trash2 } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import {

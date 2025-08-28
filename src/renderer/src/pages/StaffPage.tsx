@@ -1,6 +1,6 @@
 // File: src/renderer/src/pages/StaffPage.tsx
 
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 // [PERMISSIONS] Step 1: Import the permissions hook

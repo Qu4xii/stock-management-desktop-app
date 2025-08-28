@@ -1,6 +1,6 @@
 // File: src/renderer/src/pages/PurchaseOrderDetailPage.tsx
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card'
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { toast } from 'sonner'
 import { PurchaseOrder } from '../types'
 import { usePermissions } from '../hooks/usePermissions'
-import { ArrowLeft, CheckCircle, Package } from 'lucide-react'
+import { ArrowLeft, CheckCircle } from 'lucide-react'
 
 function PurchaseOrderDetailPage(): JSX.Element {
   const { can } = usePermissions()

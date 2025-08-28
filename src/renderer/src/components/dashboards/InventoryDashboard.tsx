@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui
 import { Badge } from '../ui/badge'
 import { StaffMember, InventoryStats, Product } from '../../types'
 import { toast } from 'sonner'
-import { Package, Warehouse, DollarSign, AlertTriangle, PackageX, ListOrdered } from 'lucide-react'
+import { Package, Warehouse, DollarSign, AlertTriangle, PackageX } from 'lucide-react'
 
 // Helper component for KPI cards
 const StatCard = ({ title, value, icon }: { title: string; value: string | number; icon: React.ReactNode }) => (
@@ -54,7 +54,9 @@ function InventoryDashboard({ user }: DashboardProps): JSX.Element {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Inventory Dashboard</h1>
-        <p className="text-muted-foreground">Manage and monitor product stock levels.</p>
+        <p className="text-muted-foreground">
+          Welcome, {user.name}. Manage and monitor product stock levels.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

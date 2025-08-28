@@ -1,6 +1,5 @@
 // File: src/renderer/src/components/ProtectedRoute.tsx (Corrected)
 
-import React from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import WaitingForApprovalPage from '../pages/WaitingForApprovalPage' // We'll render this directly

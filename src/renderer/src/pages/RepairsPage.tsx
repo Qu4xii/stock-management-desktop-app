@@ -1,6 +1,6 @@
 // File: src/renderer/src/pages/RepairsPage.tsx
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 // [PERMISSIONS] Step 1: Import the permissions hook
 import { usePermissions } from '../hooks/usePermissions'

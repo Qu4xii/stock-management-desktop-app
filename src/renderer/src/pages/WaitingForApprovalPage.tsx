@@ -1,6 +1,5 @@
 // File: src/renderer/src/pages/WaitingForApprovalPage.tsx
 
-import React from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Button } from '../components/ui/button' // Using your existing ShadCN button
 import { LogOut, Clock } from 'lucide-react'

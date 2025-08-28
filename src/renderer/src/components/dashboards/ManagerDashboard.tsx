@@ -227,7 +227,7 @@ function ManagerDashboard({ user }: DashboardProps): JSX.Element {
                     paddingAngle={3}
                     cornerRadius={5}
                   >
-                    {statusData.map((entry, index) => (
+                    {statusData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
                   </Pie>
@@ -297,7 +297,7 @@ function ManagerDashboard({ user }: DashboardProps): JSX.Element {
                     paddingAngle={3}
                     cornerRadius={5}
                   >
-                    {priorityData.map((entry, index) => (
+                    {priorityData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
                   </Pie>

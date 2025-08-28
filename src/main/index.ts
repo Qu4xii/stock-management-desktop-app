@@ -5,8 +5,8 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import fs from 'fs'
-import path from 'path'
-import * as PDFKit from 'pdfkit'
+//import path from 'path'
+//import * as PDFKit from 'pdfkit'
 import {
   clientsApi,
   productsApi,

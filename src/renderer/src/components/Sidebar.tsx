@@ -81,7 +81,7 @@ function Sidebar(): JSX.Element {
           )}
           {can('purchase-orders:read') && (
             <Link to="/purchase-orders" className={navLinkClasses('/purchase-orders')}>
-              <ShoppingCart className="h-5 h-5 mr-3" />
+              <ShoppingCart className="h-5 mr-3" />
               Purchase Orders
             </Link>
           )}

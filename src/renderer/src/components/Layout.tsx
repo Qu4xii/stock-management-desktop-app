@@ -2,7 +2,6 @@
 
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
-import { ModeToggle } from './ModeToggle'
 import { UserNav } from './UserNav';
 /**
  * The Layout component defines the main visual structure of the application.
