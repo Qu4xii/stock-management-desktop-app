@@ -26,13 +26,20 @@
     "appId": "com.invento.app",
     "productName": "Invento",
     "files": [
-      "dist-electron/**/*"
+      "dist/**/*",
+      "out/**/*"
     ],
+    "extraMetadata": {
+      "main": "out/main/index.js"
+    },
     "directories": {
       "buildResources": "build"
     },
     "win": {
       "icon": "build/icon2.ico"
+    },
+    "mac": {
+      "icon": "build/icon.icns"
     },
     "linux": {
       "icon": "build/icon1.png"
