@@ -1,6 +1,5 @@
 // File: src/renderer/src/pages/DashboardPage.tsx
 
-import React from 'react'
 import { usePermissions } from '../hooks/usePermissions'
 import ManagerDashboard from '../components/dashboards/ManagerDashboard'
 import TechnicianDashboard from '../components/dashboards/TechnicianDashboard'

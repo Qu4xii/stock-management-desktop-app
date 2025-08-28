@@ -1,6 +1,6 @@
 // File: src/renderer/src/pages/ClientsPage.tsx
 
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { PlusCircle } from 'lucide-react'
 import { toast } from 'sonner'
 

@@ -1,6 +1,5 @@
 // File: src/renderer/src/components/StaffTable.tsx
 
-import React from 'react'
 import { StaffMember, StaffRole } from '../types'
 import { Card } from './ui/card'
 import { Button } from './ui/button'

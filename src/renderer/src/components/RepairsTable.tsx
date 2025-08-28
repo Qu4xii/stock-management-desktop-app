@@ -1,4 +1,3 @@
-import React from 'react';
 // Import RepairPriority for the new helper function
 import { Repair, RepairStatus, RepairPriority } from '../types';
 import { Card } from './ui/card';

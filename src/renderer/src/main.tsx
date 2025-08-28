@@ -2,7 +2,7 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { createHashRouter, RouterProvider, Outlet } from 'react-router-dom'
+import { createHashRouter, RouterProvider} from 'react-router-dom'
 import './assets/index.css'
 import { ThemeProvider } from './components/ThemeProvider'
 import { AuthProvider } from './context/AuthContext'
