@@ -1,35 +1,37 @@
-#  Invento - Stock and repair Tracker - Desktop Management System
+# Invento - Stock and Repair Tracker - Desktop Management System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Required Node.JS >= 18.0.0](https://img.shields.io/static/v1?label=node&message=%20%3E=18.0.0&logo=node.js&color=3f893e)](https://nodejs.org/en/download/package-manager)
 
 ## Overview
 
-StockApp is a comprehensive, cross-platform desktop application designed to manage inventory, client repairs, and staff roles for a small to medium-sized service or retail business. Built with a secure, modern technology stack, it provides a robust solution for tracking the entire lifecycle of products and work orders.
+Invento is a comprehensive, cross-platform desktop application designed to manage inventory, client repairs, and staff roles for a small to medium-sized service or retail business. Built with a secure, modern technology stack, it provides a robust solution for tracking the entire lifecycle of products and work orders.
 
-The application features a sophisticated role-based access control system, ensuring that staff members can only see and interact with the data relevant to their specific job function.
+The application's architecture is centered on a sophisticated, backend-enforced role-based access control system, ensuring that staff members can only see and interact with the data and features relevant to their specific job function.
+
+<!-- Add a GIF or a screenshot of the application dashboard here for a great first impression! -->
+<!-- ![Invento Dashboard](link-to-your-screenshot.png) -->
 
 ### Core Features
 
-*   **Role-Based Access Control (RBAC):** A secure, backend-enforced permission system with five distinct roles (Manager, Technician, Inventory Associate, Cashier, Not Assigned). The UI dynamically adapts to each user's permissions.
-*   **Inventory Management:** Full CRUD (Create, Read, Update, Delete) functionality for products. Product quantities are automatically updated through a formal procurement system.
-*   **Repair/Work Order Tracking:** A complete system for creating, assigning, and managing the status of client repair jobs from start to finish.
-*   **Supplier & Purchase Order System:** A full procurement workflow to manage suppliers and create purchase orders. Stock levels are automatically increased when an order is marked as "Received."
-*   **Client & Staff Management:** Centralized modules for managing customer and employee information, including role assignments for staff.
-*   **Role-Specific Dashboards:** Dynamic dashboard views tailored to each role, providing managers with high-level business KPIs, technicians with their personal workload, and inventory associates with stock-level alerts.
+*   **Secure Role-Based Access Control (RBAC):** Five pre-configured roles (Manager, Technician, Inventory Associate, Cashier, Not Assigned) with granular, backend-enforced permissions. The UI dynamically adapts to hide or show features based on the logged-in user's role.
+*   **Integrated Inventory Management:** Full product lifecycle tracking. Product quantities are not edited manually; they are automatically and safely updated through a formal procurement system to maintain data integrity.
+*   **Repair & Work Order Tracking:** A complete system for creating, assigning, and managing the status of client repair jobs from creation to completion. Technicians can only view and manage work orders assigned to them.
+*   **Supplier & Purchase Order System:** A full procurement workflow to manage suppliers and create purchase orders. Stock levels are automatically increased across the application when an order is marked as "Received" in a secure, transactional database operation.
+*   **Client & Staff Management:** Centralized modules for managing customer information and employee data, including role assignments for staff which are controlled exclusively by Managers.
+*   **Role-Specific Dashboards:** Dynamic dashboard views tailored to each role, providing managers with high-level business KPIs, technicians with their personal workload and stats, and inventory associates with stock-level alerts.
 
 ### Tech Stack
 
 | Category               | Technology                                                                     |
 | ---------------------- | ------------------------------------------------------------------------------ |
-| **Software Framework** | [Electron](https://www.electronjs.org/)                                        |
-| **Frontend Library**   | [React](https://react.dev/)                                                    |
+| **Software Framework** | [Electron](https://www.electronjs.org/) (v32+)                                 |
+| **Frontend Library**   | [React](https://react.dev/) (v18+) with [TypeScript](https://www.typescriptlang.org/) |
 | **Database**           | [SQLite](https://www.sqlite.org/index.html) via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) |
-| **Build Tool**         | [Vite](https://vite.dev/), [Electron-Vite](https://electron-vite.org/)          |
-| **UI and Styling**     | [shadcn/ui](https://ui.shadcn.com/), [Tailwind CSS](https://tailwindcss.com/)   |
+| **Build Tool**         | [Vite](https://vite.dev/) with [Electron-Vite](https://electron-vite.org/)     |
+| **UI and Styling**     | [shadcn/ui](https://ui.shadcn.com/) with [Tailwind CSS](https://tailwindcss.com/) |
 
-
-## Getting Started
+## Development Setup
 
 To set up the project for development, clone the repository and install the dependencies.
 
@@ -38,14 +40,16 @@ To set up the project for development, clone the repository and install the depe
 git clone <your-repository-url-here>
 
 # Navigate to the project folder
-cd StockApp
+cd invento-project
 
-# Install dependencies
+# Install all dependencies
 npm install
+
+# IMPORTANT: Rebuild native modules for Electron
+npm run rebuild
 
 # Start the project in development mode
 npm run dev
-
 ### Test and build commands
 
 # Build for macOS
@@ -57,9 +61,10 @@ npm run build:win
 # Build for Linux
 npm run build:linux
 
-## Project Structure
-```
-├── resources/                      # Application icon and other static assets
+├── build/                          # Icons and resources for the packaged application
+├── dist/                           # Output folder for the final installer
+├── out/                            # Intermediate build output
+├── resources/                      # Application icon for development
 ├── src/                            # Main source code
 │   ├── main/                       # Main process code (Node.js Backend)
 │   │   ├── lib/                    # Core backend libraries
@@ -67,24 +72,14 @@ npm run build:linux
 │   │   │   └── permissions.ts      # --- Defines the Role-Based Access Control matrix
 │   │   └── index.ts                # --- Entry point for the main process and all IPC handlers
 │   ├── preload/                    # Preload scripts (Secure Bridge)
-│   │   └── index.ts                # --- Exposes secure backend functions to the frontend via contextBridge
+│   │   └── index.ts                # --- Exposes secure backend functions to the frontend
 │   ├── renderer/                   # Renderer process code (React Frontend)
-│   │   ├── src/                    
+│   │   ├── src/
 │   │   │   ├── components/         # Reusable React components
-│   │   │   │   ├── dashboards/     # --- Role-specific dashboard components
-│   │   │   │   ├── dialogs/        # --- Add/Edit/View dialog components
-│   │   │   │   └── ui/             # --- Shadcn UI components
-│   │   │   ├── contexts/           # --- React Contexts (e.g., AuthContext)
+│   │   │   ├── context/            # --- React Contexts (e.g., AuthContext)
 │   │   │   ├── hooks/              # --- Custom hooks (e.g., usePermissions)
 │   │   │   ├── pages/              # --- Main page components for each feature
-│   │   │   ├── types/              # --- All TypeScript type definitions (single source of truth)
-│   │   │   └── App.tsx             # --- Main application component with the router
+│   │   │   └── ...
 │   │   ├── main.tsx                # --- Entry point for the React application
-│   │   └── index.html              # --- HTML template (contains the app title)
-├── .gitignore                      # Git ignore patterns
-├── components.json                 # Shadcn Components configuration
-├── electron.vite.config.ts         # Vite configuration for Electron
-├── package.json                    # Project metadata and dependencies
-├── README.md                       # This file
-└── tsconfig.json                   # Main TypeScript configuration
-```
+├── package.json                    # Project metadata, scripts, and dependencies
+└── README.md                       # This file
