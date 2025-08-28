@@ -695,12 +695,14 @@ ipcMain.handle('db:export-clientReport', async (_event, options) => {
  * Create the main Electron window
  */
 function createWindow(): void {
+  const iconPath = join(__dirname, '../../resources/icon.png');
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    icon: iconPath,
+    
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,

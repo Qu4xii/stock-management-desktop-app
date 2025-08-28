@@ -1,7 +1,7 @@
 {
-  "name": "electron-react-shadcn",
-  "version": "0.0.0",
-  "description": "An Electron template with React, TypeScript, and Shadcn UI",
+  "name": "invento",
+  "version": "1.0.0",
+  "description": "A desktop management system for stock and repairs.",
   "main": "./out/main/index.js",
   "author": "Author",
   "homepage": "https://electron-vite.org",
@@ -21,6 +21,22 @@
     "test:unit": "vitest",
     "test": "npm run test:unit",
     "coverage": "vitest run --coverage"
+  },
+  "build": {
+    "appId": "com.invento.app",
+    "productName": "Invento",
+    "files": [
+      "dist-electron/**/*"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
+    "win": {
+      "icon": "build/icon2.ico"
+    },
+    "linux": {
+      "icon": "build/icon1.png"
+    }
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
