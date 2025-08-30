@@ -236,6 +236,10 @@ export const productsApi = {
 
 // --- STAFF API (FIXED) ---
 export const staffApi = {
+  getTotalStaffCount: (): number => {
+    const result = db.prepare('SELECT COUNT(*) as count FROM staff').get() as { count: number };
+    return result.count;
+  },
   getAll: (): StaffMember[] => {
     const staffMembers = db.prepare('SELECT * FROM staff ORDER BY name ASC').all() as any[];
     return staffMembers.map(member => ({ ...member, isAvailable: member.isAvailable === 1 }));
@@ -314,16 +318,22 @@ export const staffApi = {
   delete: (id: number): void => {
     db.prepare('DELETE FROM staff WHERE id = ?').run(id);
   },
-  
-  signUp: async (data: Pick<StaffMember, 'name' | 'email' | 'phone'> & { password: string }): Promise<{ id: number }> => {
+
+  // NEW: Sign up a new staff member-optional role
+signUp: async (
+    data: Pick<StaffMember, 'name' | 'email' | 'phone'> & { password: string },
+    role: string = 'Not Assigned' // The role is now a parameter with a default value
+  ): Promise<{ id: number }> => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(data.password, saltRounds);
     const stmt = db.prepare(
+      // The SQL now uses a variable (@role) instead of a hardcoded string
       `INSERT INTO staff (name, email, phone, password, role, isAvailable) 
-      VALUES (@name, @email, @phone, @password, 'Not Assigned', 1)`
+      VALUES (@name, @email, @phone, @password, @role, 1)`
     );
     try {
-      const info = stmt.run({ ...data, password: hashedPassword });
+      // We add the role to the data object that the query executes
+      const info = stmt.run({ ...data, password: hashedPassword, role: role });
       return { id: Number(info.lastInsertRowid) };
     } catch (error: any) {
       if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {

@@ -80,20 +80,34 @@ function registerIpcHandlers(): void {
   // =========================
   ipcMain.handle('db:auth-signUp', async (event, data) => {
     try {
-      const record = await staffApi.signUp(data)
-      const user = await staffApi.getById(record.id)
-      if (!user) throw new Error('Failed to retrieve user after sign up')
+      // --- [THE FIX] ---
+      // 1. Check if any users already exist in the database.
+      const totalStaff = await staffApi.getTotalStaffCount();
+
+      let userRole = 'Not Assigned';
+      // 2. If the database is empty, this is the very first user. Make them a Manager.
+      if (totalStaff === 0) {
+        userRole = 'Manager';
+        console.log('[AUTH] First user detected. Promoting to Manager.');
+      }
+
+      // 3. Call the modified signUp function, passing the determined role.
+      const record = await staffApi.signUp(data, userRole);
+      // --- [END OF FIX] ---
+
+      const user = await staffApi.getById(record.id);
+      if (!user) throw new Error('Failed to retrieve user after sign up');
 
       // [SECURITY] Associate the new user with the window that signed up
-      const window = BrowserWindow.fromWebContents(event.sender)
-      if (window) userSessions.set(window.id, user)
+      const window = BrowserWindow.fromWebContents(event.sender);
+      if (window) userSessions.set(window.id, user);
 
-      return user
+      return user;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Sign up failed'
-      throw new Error(errorMessage)
+      const errorMessage = error instanceof Error ? error.message : 'Sign up failed';
+      throw new Error(errorMessage);
     }
-  })
+  });
 
   ipcMain.handle('db:auth-logIn', async (event, { email, password }) => {
     try {
